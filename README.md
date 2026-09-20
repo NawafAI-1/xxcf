@@ -92,11 +92,12 @@ The site then serves at `https://<owner>.github.io/<repo>/`.
 
 ### Basemap (optional CARTO key)
 
-The maps render on OpenFreeMap's Positron style, which needs no key. CARTO's
-own basemaps can be used instead — set a repository secret named
-`CARTO_API_KEY` (Settings → Secrets and variables → Actions) and the deploy
-workflow passes it to the build as `NEXT_PUBLIC_CARTO_API_KEY`. With no secret
-set, the build simply uses OpenFreeMap.
+The maps render on MapLibre's demo tiles — the political basemap with
+countries and coastlines — which needs no key. CARTO's grey Positron style can
+be used instead: set a repository secret named `CARTO_API_KEY` (Settings →
+Secrets and variables → Actions) and the deploy workflow passes it to the build
+as `NEXT_PUBLIC_CARTO_API_KEY`. Setting that secret changes how every map
+looks, so leave it unset to keep the political basemap.
 
 Two things to know before adding one:
 

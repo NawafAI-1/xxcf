@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { BASEMAP_STYLE_URL, withBasemap } from '@/lib/basemap';
-import { type BBox, bboxPolygon, isGlobalScale, spotlightMask } from '@/lib/spatial';
+import { type BBox, bboxPolygon, isGlobalScale } from '@/lib/spatial';
 
 interface MiniMapProps {
   bbox: BBox;
@@ -62,30 +62,12 @@ export default function MiniMap({ bbox, color = '#0f766e' }: MiniMapProps) {
         if (cancelled) return;
         fit(map, false);
 
-        if (!global) {
-          map.addSource('mask', { type: 'geojson', data: spotlightMask(bbox) });
-          map.addLayer({
-            id: 'mask',
-            type: 'fill',
-            source: 'mask',
-            paint: { 'fill-color': '#f8fafc', 'fill-opacity': 0.62 },
-          });
-        }
-
         map.addSource('footprint', { type: 'geojson', data: bboxPolygon(bbox) });
         map.addLayer({
           id: 'footprint-fill',
           type: 'fill',
           source: 'footprint',
-          paint: { 'fill-color': color, 'fill-opacity': 0.12 },
-        });
-        // A white line under the coloured one keeps the edge readable wherever
-        // it crosses a coastline or a dark patch of basemap.
-        map.addLayer({
-          id: 'footprint-halo',
-          type: 'line',
-          source: 'footprint',
-          paint: { 'line-color': '#ffffff', 'line-width': 5, 'line-opacity': 0.9 },
+          paint: { 'fill-color': color, 'fill-opacity': 0.25 },
         });
         map.addLayer({
           id: 'footprint-line',
@@ -96,7 +78,7 @@ export default function MiniMap({ bbox, color = '#0f766e' }: MiniMapProps) {
         });
       };
 
-      cleanupBasemap = withBasemap(map, { addOverlays, labelled: false });
+      cleanupBasemap = withBasemap(map, { addOverlays });
 
       // "Reset view" appears only after the reader moves the map themselves.
       // Listening to moveend would catch the opening fitBounds too, so the

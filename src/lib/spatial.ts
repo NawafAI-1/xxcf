@@ -29,27 +29,6 @@ export function bboxToRing([w, s, e, n]: BBox): [number, number][] {
   ];
 }
 
-/**
- * A polygon covering the whole world with the bbox punched out of it — drawn
- * over the basemap, it dims everything outside the footprint so the dataset's
- * own extent is what the eye lands on. The hole is wound the opposite way from
- * the outer ring, which is what makes it a hole rather than a second shape.
- */
-export function spotlightMask(bbox: BBox): GeoJSON.Feature<GeoJSON.Polygon> {
-  const world: [number, number][] = [
-    [-180, -85],
-    [180, -85],
-    [180, 85],
-    [-180, 85],
-    [-180, -85],
-  ];
-  return {
-    type: 'Feature',
-    properties: {},
-    geometry: { type: 'Polygon', coordinates: [world, bboxToRing(bbox).slice().reverse()] },
-  };
-}
-
 export function bboxPolygon(bbox: BBox, properties: Record<string, unknown> = {}): GeoJSON.Feature<GeoJSON.Polygon> {
   return {
     type: 'Feature',

@@ -2,13 +2,12 @@
 // usable when it cannot be reached.
 //
 // Two rules learned the hard way:
-//  - The basemap must need no API key. CARTO's tiles now answer key-less
-//    requests with an "API KEY REQUIRED" watermark stamped across the map
-//    rather than an error, so nothing in the code can detect it — only the
-//    choice of host prevents it.
-//  - MapLibre's own demo tiles are the one style this project has actually
-//    seen render, so they are the fallback: a political map in pastels is a
-//    poor backdrop for a footprint, but it beats an empty rectangle.
+//  - The basemap must need no API key unless one is configured. CARTO's tiles
+//    answer key-less requests with an "API KEY REQUIRED" watermark stamped
+//    across the map rather than an error, so nothing in the code can detect
+//    it — only the choice of host prevents it.
+//  - Whichever style is not in use is kept as the fallback, because a basemap
+//    host that cannot be reached must never take the footprints down with it.
 import type { Map as MapLibreMap, StyleSpecification } from 'maplibre-gl';
 
 /**
@@ -22,19 +21,25 @@ const CARTO_API_KEY = process.env.NEXT_PUBLIC_CARTO_API_KEY?.trim();
 /** OpenFreeMap's Positron: the same quiet grey cartography, no key, no sign-up. */
 export const OPENFREEMAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/positron';
 
+/**
+ * MapLibre's demo tiles: a political map in pastels. Chosen deliberately as
+ * this site's basemap — it needs no key, it is the style that has actually
+ * been seen rendering here, and countries-and-coastlines is the context a
+ * reader wants when asking "where in the region is this dataset?".
+ */
+export const DEMOTILES_STYLE_URL = 'https://demotiles.maplibre.org/style.json';
+
 export const BASEMAP_STYLE_URL = CARTO_API_KEY
   ? `https://basemaps.cartocdn.com/gl/positron-gl-style/style.json?api_key=${encodeURIComponent(CARTO_API_KEY)}`
-  : OPENFREEMAP_STYLE_URL;
+  : DEMOTILES_STYLE_URL;
 
 /**
- * Second choice, then third. With a CARTO key configured the key-less
- * OpenFreeMap style is the first fallback — a quota problem or an expired key
- * then costs cartography, not the map. MapLibre's demo tiles are the last
- * remote option: a political map in pastels, but one that renders.
+ * Second choice, then third. Whatever is not primary is the backstop, so a
+ * blocked host or an expired key costs cartography rather than the map.
  */
 export const FALLBACK_STYLE_URLS = CARTO_API_KEY
-  ? [OPENFREEMAP_STYLE_URL, 'https://demotiles.maplibre.org/style.json']
-  : ['https://demotiles.maplibre.org/style.json'];
+  ? [DEMOTILES_STYLE_URL, OPENFREEMAP_STYLE_URL]
+  : [OPENFREEMAP_STYLE_URL];
 
 /** Plain water-coloured canvas, drawn under everything by both styles' own background. */
 export const CANVAS_COLOR = '#eaf1f6';
