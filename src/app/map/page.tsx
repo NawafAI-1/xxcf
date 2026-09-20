@@ -18,7 +18,7 @@ export default function MapPage() {
       <PageHeader
         accent={sectionAccent('/map')}
         title="Spatial footprints"
-        description={`Every place in the catalog, on a globe of the Earth as it looked yesterday. Each point is one location, sized by how many datasets sit there and colored by domain. Click a point to travel to it, then click it again to open what is there. Datasets with no single place, the global products, are listed below the map.`}
+        description={`The basin and what has been measured in it. Each point is one location, sized by how many datasets sit there; click it to travel, click again to open them. Jump between subbasins, paint sea surface temperature or chlorophyll over the water and scrub through a year of it, and read the profile at the right to see how observation thins from the centre toward the strait. Datasets with no single place, the global products, are listed below the map.`}
       />
       <MapPageClient sources={sources} />
     </div>
