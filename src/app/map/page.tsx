@@ -3,7 +3,7 @@ import { getAllSources } from '@/lib/sources';
 import { latitudeProfile, profileExtremes } from '@/lib/basin';
 import { type BBox, isGlobalScale } from '@/lib/spatial';
 import { DOMAIN_COLORS } from '@/lib/types';
-import BasinRibbon from '@/components/BasinRibbon';
+import BasinMap from '@/components/BasinMap';
 import PageHeader from '@/components/PageHeader';
 import { sectionAccent } from '@/lib/sections';
 
@@ -23,6 +23,13 @@ const DOMAIN_LABELS: Record<string, string> = {
 export default function WherePage() {
   const sources = getAllSources();
   const local = sources.filter((s) => s.spatial.bbox && !isGlobalScale(s.spatial.bbox as BBox));
+  // Regional records centred beyond the frame: real places, just not this sea.
+  const offFrame = local.filter((s) => {
+    const [w, south, e, north] = s.spatial.bbox as BBox;
+    const lon = (w + e) / 2;
+    const lat = (south + north) / 2;
+    return lon < 31.5 || lon > 45.5 || lat < 10.5 || lat > 30.5;
+  });
   const global = sources.filter((s) => s.spatial.bbox && isGlobalScale(s.spatial.bbox as BBox));
   const profile = latitudeProfile(sources);
   const { max, min } = profileExtremes(profile);
@@ -34,14 +41,14 @@ export default function WherePage() {
       <PageHeader
         accent={sectionAccent('/map')}
         title="Where the data is"
-        description="The Red Sea runs 2,000 km along one axis and 300 km across it, so where a dataset reaches is very nearly a question of latitude. The basin is drawn here as a ribbon from the head of the Gulf of Aqaba down to the strait, shaded by how many datasets reach each half-degree. Every dot is a dataset at the middle of its reach; hover to name it, click to open it."
+        description="Where the catalogue's work actually sits, from the Gulf of Aqaba down to Bab el-Mandeb. Each circle is a location that holds data, sized and numbered by how much; hover to see what is there, click to open it."
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[32rem_1fr]">
         <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-base font-semibold text-slate-900">
-              {local.length} datasets along the basin
+              {local.length - offFrame.length} datasets on the basin
             </h2>
             <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
               {Object.entries(DOMAIN_LABELS).map(([key, label]) => (
@@ -57,14 +64,12 @@ export default function WherePage() {
             </ul>
           </div>
 
-          <div className="pl-10">
-            <BasinRibbon sources={sources} className="h-[34rem]" />
-          </div>
+          <BasinMap sources={sources} />
 
           <p className="mt-4 text-xs leading-relaxed text-slate-500">
-            Schematic, not a chart of the coastline: the ribbon carries latitude and nothing else.
-            Shading is the number of datasets reaching each half-degree band, taken from the
-            records&rsquo; own bounding boxes.
+            Coastline from Natural Earth, drawn straight into the page: no tiles, no key, and
+            nothing fetched while you read it. A numbered circle is that many datasets centred on
+            the same spot; click it to see them, or click a single one to open it.
           </p>
         </section>
 
@@ -82,6 +87,34 @@ export default function WherePage() {
               catalogue for where to survey next.
             </p>
           </section>
+
+          {offFrame.length > 0 && (
+            <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h2 className="text-base font-semibold text-slate-900">
+                {offFrame.length} centred outside the frame
+              </h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Regional records whose middle falls beyond this map: real places, just not this sea.
+              </p>
+              <ul className="mt-3 space-y-1.5">
+                {offFrame.map((s) => (
+                  <li key={s.id}>
+                    <Link
+                      href={`/sources/${s.id}`}
+                      className="flex items-start gap-2 text-sm text-slate-700 transition hover:text-teal-800"
+                    >
+                      <span
+                        className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+                        style={{ backgroundColor: DOMAIN_COLORS[s.domain[0]] }}
+                        aria-hidden
+                      />
+                      <span>{s.title}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           {global.length > 0 && (
             <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
