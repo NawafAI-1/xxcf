@@ -5,7 +5,13 @@ import type { Map as MapLibreMap, MapGeoJSONFeature } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { Source, Subbasin } from '@/lib/types';
 import { DOMAIN_COLORS } from '@/lib/types';
-import { BASEMAP_STYLE_URL, withBasemap } from '@/lib/basemap';
+import {
+  DEMOTILES_STYLE_URL,
+  SPACE_COLOR,
+  blueMarbleStyle,
+  esriImageryStyle,
+  withBasemap,
+} from '@/lib/basemap';
 import { type BBox, bboxToRing, isGlobalScale } from '@/lib/spatial';
 import SourceCard from './SourceCard';
 
@@ -52,9 +58,9 @@ export default function MapView({ sources }: { sources: Source[] }) {
 
       const map = new maplibregl.Map({
         container: containerRef.current,
-        style: BASEMAP_STYLE_URL,
+        style: blueMarbleStyle(),
         center: [38.5, 20.5],
-        zoom: 4.2,
+        zoom: 2.4,
         attributionControl: false,
         dragRotate: false,
         pitchWithRotate: false,
@@ -64,11 +70,28 @@ export default function MapView({ sources }: { sources: Source[] }) {
       map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
 
       const addOverlays = () => {
+        // The catalogue covers one basin on a round planet, and saying so is
+        // the point of the globe: the Red Sea sits where it sits, and the
+        // global-scale datasets really are global.
+        map.setProjection({ type: 'globe' });
+
         const rectangleFeatures = localSources.map((s) => ({
           type: 'Feature' as const,
           properties: { id: s.id, color: DOMAIN_COLORS[s.domain[0]] },
           geometry: { type: 'Polygon' as const, coordinates: [bboxToRing(s.spatial.bbox as BBox)] },
         }));
+
+        // At globe zoom a Red Sea bounding box is a few pixels wide, so each
+        // dataset also gets a dot at the centre of its footprint. The dots are
+        // what you click from orbit; the rectangles take over as you descend.
+        const dotFeatures = localSources.map((s) => {
+          const [w, sLat, e, n] = s.spatial.bbox as BBox;
+          return {
+            type: 'Feature' as const,
+            properties: { id: s.id, color: DOMAIN_COLORS[s.domain[0]] },
+            geometry: { type: 'Point' as const, coordinates: [(w + e) / 2, (sLat + n) / 2] },
+          };
+        });
 
         map.addSource('bboxes', {
           type: 'geojson',
@@ -78,7 +101,7 @@ export default function MapView({ sources }: { sources: Source[] }) {
           id: 'bbox-fill',
           type: 'fill',
           source: 'bboxes',
-          paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.14 },
+          paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.22 },
         });
         // White under the coloured edge: with 30-odd overlapping footprints it
         // is the gap between outlines, not the outlines themselves, that lets
@@ -87,7 +110,7 @@ export default function MapView({ sources }: { sources: Source[] }) {
           id: 'bbox-halo',
           type: 'line',
           source: 'bboxes',
-          paint: { 'line-color': '#ffffff', 'line-width': 4, 'line-opacity': 0.75 },
+          paint: { 'line-color': '#ffffff', 'line-width': 4, 'line-opacity': 0.85 },
         });
         map.addLayer({
           id: 'bbox-outline',
@@ -96,6 +119,42 @@ export default function MapView({ sources }: { sources: Source[] }) {
           paint: { 'line-color': ['get', 'color'], 'line-width': 2 },
           layout: { 'line-join': 'round' },
         });
+
+        map.addSource('dots', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: dotFeatures },
+        });
+        // Dots fade out as the footprints they stand for become readable, so
+        // the two never compete for the same click.
+        const dotOpacity = ['interpolate', ['linear'], ['zoom'], 4.5, 1, 6.5, 0] as unknown as number;
+        map.addLayer({
+          id: 'dot-halo',
+          type: 'circle',
+          source: 'dots',
+          paint: {
+            'circle-radius': ['interpolate', ['linear'], ['zoom'], 2, 7, 5, 10],
+            'circle-color': '#ffffff',
+            'circle-opacity': dotOpacity,
+          },
+        });
+        map.addLayer({
+          id: 'dot',
+          type: 'circle',
+          source: 'dots',
+          paint: {
+            'circle-radius': ['interpolate', ['linear'], ['zoom'], 2, 4.5, 5, 7],
+            'circle-color': ['get', 'color'],
+            'circle-opacity': dotOpacity,
+          },
+        });
+
+        map.on('click', 'dot', (e) => {
+          const features: MapGeoJSONFeature[] = map.queryRenderedFeatures(e.point, { layers: ['dot'] });
+          const ids = Array.from(new Set(features.map((f) => f.properties?.id as string).filter(Boolean)));
+          pick(ids);
+        });
+        map.on('mouseenter', 'dot', () => (map.getCanvas().style.cursor = 'pointer'));
+        map.on('mouseleave', 'dot', () => (map.getCanvas().style.cursor = ''));
 
         map.on('click', 'bbox-fill', (e) => {
           const features: MapGeoJSONFeature[] = map.queryRenderedFeatures(e.point, { layers: ['bbox-fill'] });
@@ -126,7 +185,12 @@ export default function MapView({ sources }: { sources: Source[] }) {
         }
       };
 
-      cleanupBasemap = withBasemap(map, { addOverlays });
+      cleanupBasemap = withBasemap(map, {
+        addOverlays,
+        // Deeper imagery first, then the vector demo style: whatever is
+        // reachable, the planet keeps its footprints.
+        fallbacks: [esriImageryStyle(), DEMOTILES_STYLE_URL],
+      });
     })();
 
     return () => {
@@ -140,7 +204,8 @@ export default function MapView({ sources }: { sources: Source[] }) {
   return (
     <div>
       <div className="relative flex h-[70vh] gap-4">
-        <div ref={containerRef} className="h-full flex-1 overflow-hidden rounded-xl border border-slate-200 bg-[#eaf1f6] shadow-sm" />
+        <div ref={containerRef} className="h-full flex-1 overflow-hidden rounded-xl border border-slate-800 shadow-sm"
+          style={{ backgroundColor: SPACE_COLOR }} />
         {(selected || pickerOptions) && (
           <div className="w-80 shrink-0 overflow-y-auto">
             <button

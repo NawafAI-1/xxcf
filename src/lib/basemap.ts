@@ -44,8 +44,73 @@ export const FALLBACK_STYLE_URLS = CARTO_API_KEY
 /** Plain water-coloured canvas, drawn under everything by both styles' own background. */
 export const CANVAS_COLOR = '#eaf1f6';
 
-/** How long to wait for the primary style before falling back. */
+/** How long to wait for a style before falling back. */
 const STYLE_TIMEOUT_MS = 6000;
+
+/** How long a raster style gets to produce one tile before it is abandoned. */
+const TILE_TIMEOUT_MS = 8000;
+
+
+/**
+ * NASA's Blue Marble (shaded relief with bathymetry), served by GIBS: public
+ * domain, no key, and the view of Earth people picture when they picture Earth.
+ * It stops at 500 m (zoom 8), so the source caps there and MapLibre over-zooms
+ * the last level rather than requesting tiles that do not exist.
+ */
+export function blueMarbleStyle(): StyleSpecification {
+  return {
+    version: 8,
+    sources: {
+      imagery: {
+        type: 'raster',
+        tiles: [
+          'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg',
+        ],
+        tileSize: 256,
+        maxzoom: 8,
+        attribution:
+          'Imagery: <a href="https://worldview.earthdata.nasa.gov/" target="_blank" rel="noreferrer">NASA EOSDIS GIBS</a>, Blue Marble',
+      },
+    },
+    layers: [
+      { id: 'space', type: 'background', paint: { 'background-color': SPACE_COLOR } },
+      { id: 'imagery', type: 'raster', source: 'imagery' },
+    ],
+    sky: {
+      'sky-color': '#0b1a33',
+      'horizon-color': '#8ec5ff',
+      'fog-color': '#cfe6ff',
+      'sky-horizon-blend': 0.6,
+      'horizon-fog-blend': 0.6,
+      'fog-ground-blend': 0.1,
+      'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 0.9, 5, 0.5, 8, 0],
+    },
+  };
+}
+
+/** Deeper imagery for when someone zooms past what Blue Marble carries. */
+export function esriImageryStyle(): StyleSpecification {
+  return {
+    version: 8,
+    sources: {
+      imagery: {
+        type: 'raster',
+        tiles: [
+          'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        ],
+        tileSize: 256,
+        attribution: 'Imagery: Esri, Maxar, Earthstar Geographics',
+      },
+    },
+    layers: [
+      { id: 'space', type: 'background', paint: { 'background-color': SPACE_COLOR } },
+      { id: 'imagery', type: 'raster', source: 'imagery' },
+    ],
+  };
+}
+
+/** The colour of space behind the planet, and of a sphere with no tiles yet. */
+export const SPACE_COLOR = '#05070f';
 
 /**
  * Place names at mini-map size are noise, and the label layers differ between
@@ -85,22 +150,40 @@ export function hideGraticule(map: MapLibreMap): void {
   }
 }
 
+/** A style is either a URL to fetch or a specification to apply directly. */
+export type StyleSource = string | StyleSpecification;
+
 interface BasemapOptions {
   /** Adds the map's own sources and layers; called again after a style swap. */
   addOverlays: (map: MapLibreMap) => void;
   labelled?: boolean;
+  /** Styles to try in turn if the primary one does not load. */
+  fallbacks?: StyleSource[];
 }
 
 /**
- * Wires up style-ready handling for a map and degrades step by step, so the
- * data a map exists to show is never hostage to a basemap host: the primary
- * style, then each fallback style in turn if the one before it has not loaded
- * in time, and finally a plain water-coloured canvas — where the footprints
- * still draw, on an empty sea rather than on nothing.
+ * Wires up style handling for a map and degrades step by step, so the data a
+ * map exists to show is never hostage to a basemap host: the primary style,
+ * then each fallback in turn, and finally a plain canvas where the overlays
+ * still draw.
+ *
+ * Two different failures are watched for, because they look nothing alike:
+ *
+ *  - The style never loads (blocked host, DNS failure, 404 on the style JSON).
+ *    Nothing renders, and no 'load' event ever fires, so a timer catches it.
+ *  - The style loads but its tiles do not (a raster endpoint whose URL template
+ *    is wrong, or an imagery service that has moved). The map looks finished
+ *    and shows an empty sphere, so this one is caught by watching for tile
+ *    errors with no tile ever succeeding.
+ *
  * Returns a cleanup function.
  */
-export function withBasemap(map: MapLibreMap, { addOverlays, labelled = true }: BasemapOptions): () => void {
+export function withBasemap(
+  map: MapLibreMap,
+  { addOverlays, labelled = true, fallbacks = FALLBACK_STYLE_URLS }: BasemapOptions
+): () => void {
   let drawn = false;
+  let remaining = [...fallbacks];
   const timers: ReturnType<typeof setTimeout>[] = [];
 
   const draw = () => {
@@ -111,22 +194,58 @@ export function withBasemap(map: MapLibreMap, { addOverlays, labelled = true }: 
     addOverlays(map);
   };
 
-  // 'load' fires once the style is up and the first frame is drawn; if the
-  // style never arrives it never fires, which is what the timers are for.
-  map.once('load', draw);
+  const advance = () => {
+    if (remaining.length === 0) return false;
+    const [next, ...rest] = remaining;
+    remaining = rest;
+    drawn = false;
+    map.setStyle(next);
+    map.once('styledata', () => {
+      draw();
+      watchTiles();
+    });
+    return true;
+  };
 
-  const tryNext = (remaining: string[]) => {
+  // A raster style renders "successfully" with no imagery at all, so give the
+  // tiles a few seconds to prove themselves.
+  let tileErrors = 0;
+  let tileLoaded = false;
+  map.on('error', (event) => {
+    if ((event as { sourceId?: string }).sourceId) tileErrors += 1;
+  });
+  map.on('data', (event) => {
+    if (event.dataType === 'source' && 'tile' in event) tileLoaded = true;
+  });
+
+  const watchTiles = () => {
     timers.push(
       setTimeout(() => {
-        if (drawn || map.isStyleLoaded()) return;
-        const [next, ...rest] = remaining;
-        map.setStyle(next ?? canvasStyle());
-        map.once('styledata', draw);
-        if (next) tryNext(rest);
-      }, STYLE_TIMEOUT_MS)
+        if (tileLoaded || tileErrors < 3) return;
+        tileErrors = 0;
+        advance();
+      }, TILE_TIMEOUT_MS)
     );
   };
-  tryNext(FALLBACK_STYLE_URLS);
+
+  // 'load' fires once the style is up and the first frame is drawn; if the
+  // style never arrives it never fires, which is what the timer is for.
+  map.once('load', () => {
+    draw();
+    watchTiles();
+  });
+
+  timers.push(
+    setTimeout(function styleWatchdog() {
+      if (drawn || map.isStyleLoaded()) return;
+      if (!advance()) {
+        map.setStyle(canvasStyle());
+        map.once('styledata', draw);
+        return;
+      }
+      timers.push(setTimeout(styleWatchdog, STYLE_TIMEOUT_MS));
+    }, STYLE_TIMEOUT_MS)
+  );
 
   return () => timers.forEach(clearTimeout);
 }
