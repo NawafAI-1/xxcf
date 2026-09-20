@@ -67,10 +67,12 @@ export interface Access {
 
 export interface Provenance {
   originator: string;
-  license: string;
-  citation: string;
-  doi?: string;
-  source_url?: string;
+  // Null where cataloguing could not establish one — a real state of the
+  // inventory, not a placeholder to render blank.
+  license: string | null;
+  citation: string | null;
+  doi?: string | null;
+  source_url?: string | null;
   derived_from: string[]; // other source ids
 }
 
@@ -132,17 +134,41 @@ export const QUALITY_STATUSES: QualityStatus[] = [
   'deprecated',
 ];
 
+/**
+ * Domain colours, read as the sea reads: open water, seagrass, the catch, coral,
+ * and the communities around it. Validated as a categorical palette — every
+ * adjacent pair clears the colour-blind and normal-vision separation floors
+ * against a light surface, so the five domains stay distinguishable on the map,
+ * the network graph and every badge.
+ */
 export const DOMAIN_COLORS: Record<Domain, string> = {
-  environmental: '#2563eb',
-  ecological: '#16a34a',
-  production: '#d97706',
-  'nutrition-health': '#db2777',
-  'socio-economic': '#7c3aed',
+  environmental: '#0284c7', // ocean blue — water, light, temperature
+  ecological: '#047857', // seagrass green — reefs and the life on them
+  production: '#d97706', // catch amber — fisheries and landings
+  'nutrition-health': '#e11d48', // coral rose — what the catch becomes
+  'socio-economic': '#7c3aed', // deep violet — the people around the basin
 };
 
+/**
+ * Access runs from open water to closed: cyan is downloadable by anyone, slate
+ * needs a KAUST login, amber needs asking, rose is embargoed. It is a scale of
+ * openness, so it never borrows the domain hues.
+ */
+export const ACCESS_COLORS: Record<AccessTier, string> = {
+  public: '#0e7490',
+  'kaust-internal': '#64748b',
+  restricted: '#d97706',
+  embargoed: '#be123c',
+};
+
+/**
+ * Processing state is a status scale, not a category: teal means usable, amber
+ * means part-way, and slate means untouched. Raw and cleaned used to share one
+ * amber, which hid the distinction the catalog cares most about.
+ */
 export const QUALITY_COLORS: Record<QualityStatus, string> = {
-  'analysis-ready': '#16a34a',
-  cleaned: '#f59e0b',
-  raw: '#f59e0b',
-  deprecated: '#6b7280',
+  'analysis-ready': '#0f766e',
+  cleaned: '#d97706',
+  raw: '#64748b',
+  deprecated: '#94a3b8',
 };

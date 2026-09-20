@@ -1,10 +1,17 @@
 # Red Sea Marine Data Catalog
 
-A static catalog of marine datasets covering the Red Sea basin — browse/search, a
-spatial footprint map, a coverage gap matrix, an interactive source network graph,
-and per-dataset detail pages. Built with Next.js (App Router, static export),
-Tailwind, MapLibre GL, d3-force, and browser-side semantic search via
-transformers.js. Deployed to GitHub Pages.
+A static catalog of marine datasets covering the Red Sea basin — an overview
+dashboard, browse/search, a spatial footprint map, a coverage gap matrix, an
+interactive source network graph, and per-dataset detail pages. Built with
+Next.js (App Router, static export), Tailwind, MapLibre GL, d3-force, and
+browser-side semantic search via transformers.js. Deployed to GitHub Pages.
+
+The landing page (`/`) is a stakeholder-facing overview: how much is catalogued,
+how much of it is analysis-ready and openly licensed, what it covers in space and
+time, how many subbasin x theme combinations are still empty, and what the
+cataloguing itself could not verify. Every figure on it is computed at build time
+from `data/sources/` by `src/lib/stats.ts` — nothing is hardcoded, so the page
+stays true as records are added or edited.
 
 The 43 datasets in `data/sources/` are a real inventory drawn from KAUST's Red
 Sea research data holdings (environmental, ecological, production,
@@ -13,7 +20,11 @@ record's `quality.known_issues` field notes anything inferred or unverified
 during cataloging (e.g. uncounted rows in multi-GB files, unconfirmed
 licenses/DOIs) rather than guessing silently.
 
-Live site: https://nawafai-1.github.io/xxcf/
+Live site: https://nawafai-1.github.io/xxcf/ — published from this repository's
+`gh-pages` branch by the deploy workflow (see [Deployment](#deployment)).
+
+Upstream deployment, from the repository this one was forked from:
+https://integrated-reef-fisheries-lab.github.io/red-sea-catalog/
 
 ## Requirements
 
@@ -62,8 +73,58 @@ webpack-specific option.
 
 Pushing to `main` triggers `.github/workflows/deploy.yml`, which runs
 `npm ci && npm run build` and publishes `out/` to the `gh-pages` branch via
-`peaceiris/actions-gh-pages`. GitHub Pages is configured (Settings → Pages)
-to serve from that branch. No manual deploy steps needed beyond pushing.
+`peaceiris/actions-gh-pages`. The workflow can also be run by hand
+(Actions → Deploy to GitHub Pages → Run workflow) against any branch, which is
+how a branch is previewed before merging. No manual deploy steps are needed
+beyond pushing.
+
+The published site is public to anyone with its URL: GitHub Pages has no
+per-viewer access control outside Enterprise Cloud, so every catalogued record
+goes on the open web, steward names and contact addresses included.
+
+### One-time setup for a repository that has never published
+
+1. Run the workflow once (push to `main`, or dispatch it manually). It creates
+   the `gh-pages` branch.
+2. Settings → Pages → Source: *Deploy from a branch* → `gh-pages` / `/ (root)`.
+
+The site then serves at `https://<owner>.github.io/<repo>/`.
+
+### Basemap (optional CARTO key)
+
+The maps render on MapLibre's demo tiles — the political basemap with
+countries and coastlines — which needs no key. CARTO's grey Positron style can
+be used instead: set a repository secret named `CARTO_API_KEY` (Settings →
+Secrets and variables → Actions) and the deploy workflow passes it to the build
+as `NEXT_PUBLIC_CARTO_API_KEY`. Setting that secret changes how every map
+looks, so leave it unset to keep the political basemap.
+
+Two things to know before adding one:
+
+- **The key ships to the browser.** Any client-side map key does; it will be
+  readable in the published JavaScript. Restrict it to this site's domain in
+  the CARTO dashboard so it cannot be used elsewhere.
+- **Never commit it.** It belongs in the Actions secret, not in
+  `src/lib/basemap.ts` — this repository is public.
+
+If the primary style fails to load, the map falls back to the other style and
+then to a plain canvas, so a quota problem or an expired key costs cartography
+rather than the whole map.
+
+### Base path
+
+A GitHub Pages project site lives under `/<repo>/`, not at the domain root, so
+every asset URL needs that prefix. `next.config.js` derives it from
+`GITHUB_REPOSITORY` at build time — nothing to edit when the repository is
+renamed or forked, and local `next dev`/`next build` still serve from `/`.
+
+Two cases need an override, set as `PAGES_BASE_PATH` in the workflow's `env`:
+
+- A user/org site (`<owner>.github.io`) or a custom domain serves from the root:
+  set `PAGES_BASE_PATH: ''`. (An `<owner>.github.io` repository name is already
+  detected and needs no override.)
+- Serving under a different path than the repository name: set it explicitly,
+  e.g. `PAGES_BASE_PATH: '/catalog'`.
 
 ## Admin tool (editing the dataset)
 
@@ -108,15 +169,43 @@ Notes on the admin UI:
 ```
 data/sources/          One JSON file per dataset — the canonical "database"
 public/search-index.json   Generated at build time, never hand-edit
-src/app/                Pages: / (browse+search), /map, /coverage, /sources/[id]
-src/components/         SearchBar, SourceCard, FacetPanel, CoverageMatrix, MapView, ...
+src/app/                Pages: / (overview), /browse, /map, /coverage, /network, /sources/[id]
+src/components/         SearchBar, SourceCard, FacetPanel, CoverageMatrix, MapView, StatTile, BarList, ...
 src/lib/types.ts        Canonical TypeScript types mirroring the source schema
 src/lib/sources.ts      Build-time (fs-based) loading of data/sources/*.json
+src/lib/stats.ts        Build-time aggregation behind the overview page's figures
+src/lib/coverage.ts     The tracked domain x theme columns + best-quality-per-cell lookup
 src/lib/search.ts       Browser-side semantic search (lazy model load + cosine similarity)
 scripts/build-search-index.mjs   Prebuild step that generates public/search-index.json
 scripts/admin-server.mjs         Local-only admin server (see above)
 admin/                  Static HTML/CSS/JS for the admin UI (served by admin-server.mjs)
 ```
+
+## Deep links into the browse page
+
+`/browse` reads facet selections from the query string, so the overview page (and
+anything else) can link straight into a filtered view:
+
+```
+/browse?domain=ecological
+/browse?access=public&quality=analysis-ready
+/browse?subbasin=farasan,southern
+```
+
+Valid values are the union members in [`src/lib/types.ts`](src/lib/types.ts)
+(`domain`, `subbasin`, `access`, `quality`); anything else is ignored. Parameters
+may be repeated or comma-separated. They are applied after mount rather than
+during render — the exported HTML is prerendered without a query string, so
+seeding React state from the URL on the server would produce a hydration
+mismatch.
+
+## Tracking a new coverage column
+
+The coverage matrix's columns live in
+[`src/lib/coverage.ts`](src/lib/coverage.ts) (`COVERAGE_COLUMNS`). Add an entry
+there and both the matrix and the overview page's coverage figure pick it up —
+they share the same definition so they can't drift apart. A column's `theme` must
+match the string used in the records' `themes` array exactly.
 
 ## Adding a new dataset
 

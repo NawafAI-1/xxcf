@@ -1,5 +1,8 @@
 name: Deploy to GitHub Pages
 
+# Every merge to main republishes the site. workflow_dispatch also allows a
+# manual run against any branch, which is how a branch gets previewed before
+# it is merged.
 on:
   push:
     branches: [main]
@@ -26,6 +29,13 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          # Optional: a CARTO basemap key, stored as a repository secret
+          # (Settings -> Secrets and variables -> Actions). Without it the site
+          # builds against OpenFreeMap, which needs no key. Either way the value
+          # ends up in the published JavaScript — every browser-side map key
+          # does — so restrict it to this site's domain in the CARTO dashboard.
+          NEXT_PUBLIC_CARTO_API_KEY: ${{ secrets.CARTO_API_KEY }}
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4

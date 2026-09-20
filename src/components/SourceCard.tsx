@@ -9,11 +9,13 @@ const ACCESS_LABELS: Record<Source['access']['tier'], string> = {
   embargoed: 'Embargoed',
 };
 
+// Mirrors ACCESS_COLORS in types.ts: cyan open, slate internal, amber on
+// request, rose embargoed.
 const ACCESS_STYLES: Record<Source['access']['tier'], string> = {
-  public: 'bg-green-100 text-green-800',
-  'kaust-internal': 'bg-blue-100 text-blue-800',
-  restricted: 'bg-amber-100 text-amber-800',
-  embargoed: 'bg-red-100 text-red-800',
+  public: 'bg-cyan-100 text-cyan-900',
+  'kaust-internal': 'bg-slate-200 text-slate-700',
+  restricted: 'bg-amber-100 text-amber-900',
+  embargoed: 'bg-rose-100 text-rose-900',
 };
 
 export default function SourceCard({ source }: { source: Source }) {
@@ -22,7 +24,7 @@ export default function SourceCard({ source }: { source: Source }) {
   return (
     <Link
       href={`/sources/${source.id}`}
-      className="block rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md"
+      className="flex h-full flex-col rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
     >
       <div className="mb-2 flex flex-wrap items-center gap-2">
         {source.domain.map((d) => (
@@ -40,7 +42,7 @@ export default function SourceCard({ source }: { source: Source }) {
       </div>
       <h3 className="text-base font-semibold text-slate-900">{source.title}</h3>
       <p className="mt-1 line-clamp-2 text-sm text-slate-600">{source.abstract}</p>
-      <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-500">
+      <div className="mt-auto flex flex-wrap gap-3 pt-3 text-xs text-slate-500">
         <span>
           bbox [{w}, {s}, {e}, {n}]
         </span>

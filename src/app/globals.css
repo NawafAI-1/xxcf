@@ -7,5 +7,181 @@ html {
 }
 
 body {
-  @apply bg-slate-50 text-slate-900;
+  /* Not neutral grey: a page about the sea sits on a faint tint of it. Light
+     enough that slate-900 body text still clears WCAG AA comfortably. */
+  @apply bg-sea-surface text-slate-900;
+}
+
+/* ---------------------------------------------------------------------------
+   The ocean scene behind the hero (src/components/OceanScene.tsx).
+
+   Only `transform` and `opacity` are animated, so the whole scene composites on
+   the GPU and never triggers layout. Every animation is switched off wholesale
+   under prefers-reduced-motion at the bottom of this block — the scene then
+   renders as a still, which is exactly what it should look like to someone who
+   has asked their system for less motion.
+--------------------------------------------------------------------------- */
+
+/* A fish crosses the full width once per cycle; the wrapper carries the
+   crossing, an inner element carries the bob, so the two never fight. */
+.ocean-swim {
+  position: absolute;
+  left: 0;
+  color: #99f6e4;
+  animation-name: ocean-swim;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+.ocean-swim--reverse {
+  animation-name: ocean-swim-reverse;
+}
+
+.ocean-bob {
+  display: block;
+  animation-name: ocean-bob;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+@keyframes ocean-swim {
+  from {
+    transform: translateX(-12vw);
+  }
+  to {
+    transform: translateX(112vw);
+  }
+}
+
+@keyframes ocean-swim-reverse {
+  from {
+    transform: translateX(112vw) scaleX(-1);
+  }
+  to {
+    transform: translateX(-12vw) scaleX(-1);
+  }
+}
+
+@keyframes ocean-bob {
+  0%,
+  100% {
+    transform: translateY(-4px) rotate(-1.5deg);
+  }
+  50% {
+    transform: translateY(4px) rotate(1.5deg);
+  }
+}
+
+/* Light from the surface: two wide, soft shafts that brighten and fade. */
+.ocean-rays {
+  position: absolute;
+  inset: -20% -10% auto -10%;
+  height: 140%;
+  background:
+    linear-gradient(104deg, transparent 42%, rgba(186, 230, 253, 0.16) 47%, transparent 52%),
+    linear-gradient(96deg, transparent 63%, rgba(204, 251, 241, 0.12) 68%, transparent 73%);
+  animation: ocean-rays 16s ease-in-out infinite;
+}
+
+@keyframes ocean-rays {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: translateX(-1.5%);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(1.5%);
+  }
+}
+
+.ocean-bubble {
+  position: absolute;
+  bottom: -12px;
+  border-radius: 9999px;
+  background: rgba(240, 253, 250, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(240, 253, 250, 0.45);
+  animation-name: ocean-bubble;
+  animation-timing-function: ease-in;
+  animation-iteration-count: infinite;
+}
+
+@keyframes ocean-bubble {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+  12% {
+    opacity: 0.8;
+  }
+  85% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(14px, -420px, 0);
+  }
+}
+
+/* The wave bands are drawn double-width and slide by half their width, so the
+   loop closes on itself with no visible jump. */
+.ocean-waves {
+  position: absolute;
+  inset: auto 0 -1px 0;
+  width: 100%;
+  height: 90px;
+}
+
+.ocean-wave {
+  animation-name: ocean-wave;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  transform-origin: center bottom;
+}
+
+.ocean-wave--back {
+  fill: rgba(45, 212, 191, 0.14);
+  animation-duration: 13s;
+}
+
+.ocean-wave--front {
+  fill: rgba(15, 118, 110, 0.28);
+  animation-duration: 9s;
+  animation-direction: alternate-reverse;
+}
+
+@keyframes ocean-wave {
+  0%,
+  100% {
+    transform: translateX(-2.5%) scaleY(1);
+  }
+  50% {
+    transform: translateX(2.5%) scaleY(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ocean-swim,
+  .ocean-bob,
+  .ocean-rays,
+  .ocean-bubble,
+  .ocean-wave {
+    animation: none !important;
+  }
+
+  /* Without the crossing animation a fish would sit at the far left edge,
+     half out of frame; park the school inside the scene instead. */
+  .ocean-swim {
+    transform: translateX(18vw);
+  }
+
+  .ocean-swim--reverse {
+    transform: translateX(68vw) scaleX(-1);
+  }
+
+  .ocean-bubble {
+    opacity: 0.4;
+    transform: translate3d(0, -140px, 0);
+  }
 }

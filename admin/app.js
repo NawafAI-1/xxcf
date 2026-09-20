@@ -286,12 +286,12 @@ function renderForm(existing) {
   provenance.appendChild(originatorInput);
 
   provenance.appendChild(el('label', { text: 'License' }));
-  const licenseInput = el('input', { type: 'text', name: 'license', value: source.provenance.license });
+  const licenseInput = el('input', { type: 'text', name: 'license', value: source.provenance.license ?? '' });
   provenance.appendChild(licenseInput);
 
   provenance.appendChild(el('label', { text: 'Citation' }));
   const citationInput = el('textarea', { name: 'citation', rows: 2 });
-  citationInput.value = source.provenance.citation;
+  citationInput.value = source.provenance.citation ?? '';
   provenance.appendChild(citationInput);
 
   const provRow = el('div', { class: 'grid-2' });
