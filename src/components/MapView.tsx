@@ -15,6 +15,13 @@ import {
 } from '@/lib/basemap';
 import { type BBox, isGlobalScale } from '@/lib/spatial';
 import {
+  BAND_STEP,
+  BASIN_BOUNDS,
+  SUBBASIN_EXTENTS,
+  latitudeProfile,
+  profileExtremes,
+} from '@/lib/basin';
+import {
   SCIENCE_LAYERS,
   SLIDER_DAYS,
   type ScienceLayer,
@@ -36,6 +43,13 @@ const SUBBASIN_CENTROIDS: Record<Subbasin, [number, number]> = {
 };
 
 const GLOBE_VIEW = { center: [38.5, 20.5] as [number, number], zoom: 2.4 };
+const SUBBASIN_ORDER: (keyof typeof SUBBASIN_EXTENTS)[] = [
+  'gulf-of-aqaba',
+  'northern',
+  'central',
+  'southern',
+  'farasan',
+];
 /** Where a first click lands you: close enough to read the coastline. */
 const PLACE_ZOOM = 5.5;
 
@@ -89,6 +103,8 @@ export default function MapView({ sources }: { sources: Source[] }) {
   const [hint, setHint] = useState<string | null>(null);
   const [away, setAway] = useState(false);
   const [science, setScience] = useState<ScienceLayer | null>(null);
+  const [planet, setPlanet] = useState(false);
+  const [subbasin, setSubbasin] = useState<keyof typeof SUBBASIN_EXTENTS | null>(null);
   const [date, setDate] = useState(defaultDate());
   const [playing, setPlaying] = useState(false);
   const [scienceFailed, setScienceFailed] = useState(false);
@@ -102,6 +118,8 @@ export default function MapView({ sources }: { sources: Source[] }) {
   // The place a first click flew to. A second click on it opens its datasets.
   const armedRef = useRef<string | null>(null);
 
+  const profile = latitudeProfile(sources);
+  const extremes = profileExtremes(profile);
   const localSources = sources.filter((s) => s.spatial.bbox && !isGlobalScale(s.spatial.bbox as BBox));
   const globalSources = sources.filter((s) => s.spatial.bbox && isGlobalScale(s.spatial.bbox as BBox));
   const placeSources = [...localSources, ...sources.filter((s) => !s.spatial.bbox)];
@@ -204,12 +222,48 @@ export default function MapView({ sources }: { sources: Source[] }) {
     }
   }
 
-  function backToGlobe() {
+  function resetView() {
     armedRef.current = null;
     setHint(null);
     setSelected(null);
     setPickerOptions(null);
-    mapRef.current?.flyTo({ ...GLOBE_VIEW, duration: 1400 });
+    setSubbasin(null);
+    const map = mapRef.current;
+    if (!map) return;
+    if (planet) {
+      map.flyTo({ ...GLOBE_VIEW, duration: 1400 });
+    } else {
+      map.fitBounds(BASIN_BOUNDS, { padding: 40, duration: 1400 });
+    }
+  }
+
+  /** The planet is a way to look at the basin from further off, not the default. */
+  function togglePlanet() {
+    const map = mapRef.current;
+    if (!map) return;
+    const next = !planet;
+    setPlanet(next);
+    armedRef.current = null;
+    setHint(null);
+    map.setProjection({ type: next ? 'globe' : 'mercator' });
+    if (next) {
+      map.flyTo({ ...GLOBE_VIEW, duration: 1400 });
+    } else {
+      map.fitBounds(BASIN_BOUNDS, { padding: 40, duration: 1400 });
+    }
+  }
+
+  function goToSubbasin(key: keyof typeof SUBBASIN_EXTENTS) {
+    const map = mapRef.current;
+    if (!map) return;
+    setSubbasin(key);
+    armedRef.current = null;
+    setHint(null);
+    if (planet) {
+      setPlanet(false);
+      map.setProjection({ type: 'mercator' });
+    }
+    map.fitBounds(SUBBASIN_EXTENTS[key].bounds, { padding: 60, duration: 1400 });
   }
 
   useEffect(() => {
@@ -224,19 +278,19 @@ export default function MapView({ sources }: { sources: Source[] }) {
       const map = new maplibregl.Map({
         container: containerRef.current,
         style: trueColorStyle(),
-        center: GLOBE_VIEW.center,
-        zoom: GLOBE_VIEW.zoom,
+        bounds: BASIN_BOUNDS,
+        fitBoundsOptions: { padding: 40 },
         attributionControl: false,
         dragRotate: false,
         pitchWithRotate: false,
       });
       mapRef.current = map;
-      map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+      // Bottom-right, so the zoom buttons do not sit on top of the latitude profile.
+      map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
       map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
 
       const addOverlays = () => {
         if (cancelled) return;
-        map.setProjection({ type: 'globe' });
 
         map.addSource('places', {
           type: 'geojson',
@@ -333,7 +387,9 @@ export default function MapView({ sources }: { sources: Source[] }) {
       });
 
       map.on('moveend', () => {
-        if (!cancelled) setAway(map.getZoom() > GLOBE_VIEW.zoom + 0.5);
+        if (cancelled) return;
+        // "Reset" is only worth offering once the view has actually moved on.
+        setAway(map.getZoom() > 6 || Boolean(armedRef.current));
       });
     })();
 
@@ -472,14 +528,67 @@ export default function MapView({ sources }: { sources: Source[] }) {
           </div>
         ) : null}
 
-        {away ? (
+        {/* Basin navigation: the five subbasins the records themselves use. */}
+        <div className="absolute bottom-4 left-4 flex flex-wrap items-center gap-1 rounded-full bg-white/95 px-2 py-1.5 shadow-sm ring-1 ring-slate-200">
+          {SUBBASIN_ORDER.map((key) => (
+            <button
+              key={key}
+              onClick={() => goToSubbasin(key)}
+              className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
+                subbasin === key ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              {SUBBASIN_EXTENTS[key].label}
+            </button>
+          ))}
+          <span className="mx-1 h-4 w-px bg-slate-200" aria-hidden />
           <button
-            onClick={backToGlobe}
-            className="absolute bottom-4 left-4 rounded-full bg-white/95 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-white"
+            onClick={togglePlanet}
+            className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
+              planet ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+            }`}
+            title="See the basin from orbit"
           >
-            Back to the globe
+            Planet
           </button>
-        ) : null}
+          {away || subbasin ? (
+            <button
+              onClick={resetView}
+              className="rounded-full px-2.5 py-1 text-xs font-medium text-teal-700 transition hover:bg-teal-50"
+            >
+              Reset
+            </button>
+          ) : null}
+        </div>
+
+        {/* How observation thins along the basin, aligned with the map's own
+            latitudes: north at the top, the strait at the bottom. */}
+        <figure className="absolute right-4 top-4 hidden w-36 rounded-xl bg-white/95 p-3 shadow-sm ring-1 ring-slate-200 lg:block">
+          <figcaption className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            Datasets by latitude
+          </figcaption>
+          <div className="mt-2 space-y-[2px]">
+            {[...profile].reverse().map((band) => (
+              <div
+                key={band.lat}
+                className="flex items-center gap-1.5"
+                title={`${band.lat.toFixed(1)}-${(band.lat + BAND_STEP).toFixed(1)}°N: ${band.count} datasets`}
+              >
+                <span className="w-7 shrink-0 text-right text-[10px] tabular-nums text-slate-400">
+                  {Number.isInteger(band.lat) ? `${band.lat}°` : ''}
+                </span>
+                <span
+                  className="h-[3px] rounded-r-[2px] bg-teal-600"
+                  style={{ width: `${(band.count / extremes.max) * 100}%` }}
+                />
+              </div>
+            ))}
+          </div>
+          <p className="mt-2 text-[11px] leading-snug text-slate-500">
+            {extremes.max} at the widest, {extremes.min} at the mouth: the south is about half as
+            observed as the centre.
+          </p>
+        </figure>
 
         {(selected || pickerOptions) && (
           <div className="w-80 shrink-0 overflow-y-auto">
