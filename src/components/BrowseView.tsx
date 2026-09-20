@@ -14,6 +14,7 @@ const FACET_LABELS: Record<FacetKey, string> = {
   subbasin: 'Subbasin',
   access: 'Access',
   quality: 'Status',
+  theme: 'Theme',
 };
 
 /**
@@ -36,6 +37,10 @@ function facetsFromLocation(): Facets {
     subbasin: pick<Subbasin>('subbasin', SUBBASINS),
     access: pick<AccessTier>('access', ACCESS_TIERS),
     quality: pick<QualityStatus>('quality', QUALITY_STATUSES),
+    // Themes are free text in the records, so they are taken as given rather
+    // than checked against a list. Splitting on commas would break the theme
+    // names that contain one.
+    theme: params.getAll('theme').map((t) => t.trim()).filter(Boolean),
   };
 }
 
@@ -63,6 +68,9 @@ export default function BrowseView({ sources }: { sources: Source[] }) {
     }
     if (facets.quality.length) {
       result = result.filter((s) => facets.quality.includes(s.quality.status));
+    }
+    if (facets.theme.length) {
+      result = result.filter((s) => s.themes.some((t) => facets.theme.includes(t)));
     }
 
     if (searchIds) {

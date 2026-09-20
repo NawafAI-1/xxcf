@@ -1,6 +1,21 @@
-import type { Source } from '@/lib/types';
+import Link from 'next/link';
+import type { Source, Subbasin } from '@/lib/types';
 import { SUBBASINS, QUALITY_COLORS } from '@/lib/types';
-import { COVERAGE_COLUMNS, coverageCell } from '@/lib/coverage';
+import { COVERAGE_COLUMNS, coverageCell, type CoverageColumn } from '@/lib/coverage';
+
+/**
+ * A cell's datasets are exactly those matching its subbasin, domain and theme,
+ * so the link carries all three and the browse page re-applies the same test.
+ * What the cell counts is what the link opens.
+ */
+function cellHref(subbasin: Subbasin, column: CoverageColumn): string {
+  const params = new URLSearchParams({
+    subbasin,
+    domain: column.domain,
+    theme: column.theme,
+  });
+  return `/browse?${params.toString()}`;
+}
 
 const LEGEND: { label: string; color: string; note: string }[] = [
   { label: 'Analysis-ready', color: QUALITY_COLORS['analysis-ready'], note: 'usable as-is' },
@@ -57,28 +72,46 @@ export default function CoverageMatrix({ sources }: { sources: Source[] }) {
                 </th>
                 {COVERAGE_COLUMNS.map((col) => {
                   const { status, count } = coverageCell(sources, subbasin, col);
+                  const where = `${col.label}, ${subbasin.replace(/-/g, ' ')}`;
+                  const plural = count === 1 ? '' : 's';
+
+                  // A gap has nothing to open, so it stays a plain cell rather
+                  // than a link that would lead to an empty result list.
+                  if (!status) {
+                    return (
+                      <td key={col.key} className="p-1.5">
+                        <div
+                          title={`${where}: no catalogued dataset`}
+                          className="flex h-12 w-full flex-col items-center justify-center rounded-md border border-dashed border-slate-300 bg-slate-100 text-xs font-medium text-slate-400"
+                        >
+                          gap
+                        </div>
+                      </td>
+                    );
+                  }
+
                   return (
                     <td key={col.key} className="p-1.5">
-                      <div
-                        title={
-                          status
-                            ? `${col.label}, ${subbasin.replace(/-/g, ' ')}: ${count} dataset${
-                                count === 1 ? '' : 's'
-                              }, best available is ${status.replace('-', ' ')}`
-                            : `${col.label}, ${subbasin.replace(/-/g, ' ')}: no catalogued dataset`
-                        }
-                        className={`flex h-12 w-full flex-col items-center justify-center rounded-md text-xs font-medium transition hover:brightness-110 ${
-                          status ? 'text-white' : 'border border-dashed border-slate-300 text-slate-400'
-                        }`}
-                        style={{ backgroundColor: status ? QUALITY_COLORS[status] : '#f1f5f9' }}
+                      <Link
+                        href={cellHref(subbasin, col)}
+                        title={`${where}: open the ${count} dataset${plural} behind this cell`}
+                        aria-label={`${where}: ${count} dataset${plural}, best available is ${status.replace('-', ' ')}. Opens the list.`}
+                        className="group/cell flex h-12 w-full flex-col items-center justify-center rounded-md text-xs font-medium text-white transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2"
+                        style={{ backgroundColor: QUALITY_COLORS[status] }}
                       >
-                        <span>{status ? status.replace('-', ' ') : 'gap'}</span>
-                        {status ? (
-                          <span className="text-[10px] font-normal tabular-nums text-white/80">
-                            {count} dataset{count === 1 ? '' : 's'}
+                        <span className="flex items-center gap-1">
+                          {status.replace('-', ' ')}
+                          <span
+                            aria-hidden
+                            className="opacity-0 transition-opacity group-hover/cell:opacity-90"
+                          >
+                            &rarr;
                           </span>
-                        ) : null}
-                      </div>
+                        </span>
+                        <span className="text-[10px] font-normal tabular-nums text-white/80">
+                          {count} dataset{plural}
+                        </span>
+                      </Link>
                     </td>
                   );
                 })}

@@ -8,9 +8,15 @@ export interface Facets {
   subbasin: Subbasin[];
   access: AccessTier[];
   quality: QualityStatus[];
+  /**
+   * Exact theme names, matched the way the coverage matrix matches them. Set by
+   * links rather than by a checkbox list: there are over a hundred themes, and
+   * a panel listing them all would bury the four facets that do belong there.
+   */
+  theme: string[];
 }
 
-export const EMPTY_FACETS: Facets = { domain: [], subbasin: [], access: [], quality: [] };
+export const EMPTY_FACETS: Facets = { domain: [], subbasin: [], access: [], quality: [], theme: [] };
 
 function toggle<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
@@ -82,7 +88,11 @@ export default function FacetPanel({
         selected={facets.quality}
         onChange={(quality) => onChange({ ...facets, quality })}
       />
-      {(facets.domain.length || facets.subbasin.length || facets.access.length || facets.quality.length) > 0 && (
+      {(facets.domain.length ||
+        facets.subbasin.length ||
+        facets.access.length ||
+        facets.quality.length ||
+        facets.theme.length) > 0 && (
         <button
           onClick={() => onChange(EMPTY_FACETS)}
           className="text-xs font-medium text-blue-600 hover:underline"
