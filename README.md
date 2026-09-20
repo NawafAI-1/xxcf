@@ -71,12 +71,17 @@ webpack-specific option.
 
 ## Deployment
 
-Pushing to `main` triggers `.github/workflows/deploy.yml`, which runs
-`npm ci && npm run build` and publishes `out/` to the `gh-pages` branch via
-`peaceiris/actions-gh-pages`. The workflow can also be run by hand
-(Actions → Deploy to GitHub Pages → Run workflow) against any branch, which is
-useful for previewing a branch before merging it. No manual deploy steps are
-needed beyond pushing.
+Deployment is manual on purpose. `.github/workflows/deploy.yml` runs only when
+it is dispatched by hand (Actions → Deploy to GitHub Pages → Run workflow), on
+whichever branch you pick; it runs `npm ci && npm run build` and publishes
+`out/` to the `gh-pages` branch via `peaceiris/actions-gh-pages`.
+
+Nothing publishes on a push or a merge. This repository is public, so a deploy
+puts the catalog's records — including steward names, contact addresses and
+storage paths — on the open web, and that should be a decision rather than a
+side effect of merging. To go back to deploying on every merge to `main`,
+restore the `push: branches: [main]` trigger commented at the top of the
+workflow.
 
 ### One-time setup for a repository that has never published
 

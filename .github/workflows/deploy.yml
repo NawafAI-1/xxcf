@@ -1,8 +1,13 @@
 name: Deploy to GitHub Pages
 
+# Publishing is deliberate, never automatic: this repository is public, so a
+# deploy puts the catalog's records — steward names, contact addresses and
+# storage paths — on the open web. Run it from Actions -> Deploy to GitHub Pages
+# -> Run workflow when you actually want the site (re)published. Add
+#   push:
+#     branches: [main]
+# back here to return to deploying on every merge to main.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
