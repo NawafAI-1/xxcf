@@ -48,7 +48,7 @@ export default function SearchBar({
         type="search"
         value={value}
         onChange={(e) => handleChange(e.target.value)}
-        placeholder="Search datasets — e.g. coral bleaching, fish landings, SST..."
+        placeholder="Search datasets: coral bleaching, fish landings, SST..."
         className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
       />
       {(loadingModel || searching) && (

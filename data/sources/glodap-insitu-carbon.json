@@ -100,7 +100,7 @@
   "quality": {
     "status": "raw",
     "known_issues": [
-      "Global extract, not pre-filtered to Red Sea observations — needs spatial filtering to confirm how many observations actually fall within the basin."
+      "Global extract, not pre-filtered to Red Sea observations; needs spatial filtering to confirm how many observations actually fall within the basin."
     ],
     "last_verified": "2026-04-22"
   },

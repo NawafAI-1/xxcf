@@ -1,6 +1,6 @@
 {
   "id": "sakmeo-benthic-transects",
-  "title": "SAKMEO Benthic Photo-Quadrat Cover — Point-Count Transects (2014-2023)",
+  "title": "SAKMEO Benthic Photo-Quadrat Cover: Point-Count Transects (2014-2023)",
   "abstract": "Wide-format benthic cover point-count data from SAKMEO (Saudi Aramco-KAUST Marine Environmental Observatory) photo-quadrat surveys, covering hundreds of transects across reef sites from Duba in the north to Farasan-adjacent sites, surveyed intermittently between 2014 and 2023 (repeat visits at some sites in 2014, 2016, 2017, 2019, and 2023). Each row is a benthic cover category (e.g. hard coral, macroalgae, rubble, sand, debris); each column is one transect (site + year + replicate), with cover values as proportions. A companion Metadata sheet gives per-transect site name, coordinates, region, reef, depth, exposure, and distance-to-shore.",
   "domain": ["ecological"],
   "themes": ["coral cover", "benthic community", "photo-quadrat survey", "SAKMEO"],
@@ -128,9 +128,9 @@
   "quality": {
     "status": "cleaned",
     "known_issues": [
-      "Lat/Long recorded in degrees-minutes string format in the Metadata sheet (e.g. '27 50.8511'), not decimal degrees — needs conversion before mapping.",
-      "Transect column headers encode site/year/replicate in an inconsistent ad-hoc naming scheme (e.g. DR12_10m_T1 vs AM Reef_0219_10_1) — a lookup table would help but wasn't found alongside the file.",
-      "Relationship to sakmeo-fish-visual-census-2014-2023 (same observatory, overlapping years, different survey method) is not established — likely companion surveys at some of the same sites.",
+      "Lat/Long recorded in degrees-minutes string format in the Metadata sheet (e.g. '27 50.8511'), not decimal degrees; needs conversion before mapping.",
+      "Transect column headers encode site/year/replicate in an inconsistent ad-hoc naming scheme (e.g. DR12_10m_T1 vs AM Reef_0219_10_1); a lookup table would help but wasn't found alongside the file.",
+      "Relationship to sakmeo-fish-visual-census-2014-2023 (same observatory, overlapping years, different survey method) is not established; likely companion surveys at some of the same sites.",
       "n_rows for the Metadata sheet is an approximate count of named transects (~500+ columns observed in Benthic_cover), not an exact row count."
     ],
     "last_verified": "2026-07-12"

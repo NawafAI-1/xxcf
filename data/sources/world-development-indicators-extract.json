@@ -1,6 +1,6 @@
 {
   "id": "world-development-indicators-extract",
-  "title": "World Bank World Development Indicators — Saudi Arabia Extract",
+  "title": "World Bank World Development Indicators: Saudi Arabia Extract",
   "abstract": "Extract of World Bank World Development Indicators (WDI) time series for Saudi Arabia, covering economic, trade, and development indicators relevant to coastal and marine-adjacent socio-economic context.",
   "domain": [
     "socio-economic"
@@ -91,7 +91,7 @@
   "quality": {
     "status": "analysis-ready",
     "known_issues": [
-      "Extract not yet filtered to fisheries/marine-relevant indicators specifically — includes broad WDI series."
+      "Extract not yet filtered to fisheries/marine-relevant indicators specifically; includes broad WDI series."
     ],
     "last_verified": "2026-04-26"
   },

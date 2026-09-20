@@ -1,6 +1,6 @@
 {
   "id": "cmems-olci-chlorophyll-redsea",
-  "title": "Sentinel-3 OLCI Chlorophyll-a — Red Sea (300 m, Daily)",
+  "title": "Sentinel-3 OLCI Chlorophyll-a: Red Sea (300 m, Daily)",
   "abstract": "Daily chlorophyll-a concentration from Sentinel-3 OLCI ocean color imagery at 300 m resolution, clipped precisely to the Red Sea extent, distributed via Copernicus Marine Service.",
   "domain": [
     "environmental"

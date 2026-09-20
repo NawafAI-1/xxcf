@@ -1,6 +1,6 @@
 {
   "id": "artis-attribute-tables",
-  "title": "ARTIS Attribute & Reference Tables — Taxonomy, Products, Countries, Population",
+  "title": "ARTIS Attribute & Reference Tables: Taxonomy, Products, Countries, Population",
   "abstract": "Supporting lookup/reference tables for joining with the ARTIS trade and consumption datasets: taxonomic hierarchy and common names by scientific name (sciname.csv), minimum taxonomic resolution per HS-code/species combination (code_max_resolved.csv), product descriptions and forms by HS6 code (products.csv), country regional groupings (countries.csv), and standardized national population figures for per-capita calculations (standardized_fao_pop.csv).",
   "domain": [
     "production"
@@ -140,7 +140,7 @@
   "quality": {
     "status": "raw",
     "known_issues": [
-      "Row counts for each embedded CSV are rough estimates derived from file size, not exact — exact counts require extracting the archive.",
+      "Row counts for each embedded CSV are rough estimates derived from file size, not exact; exact counts require extracting the archive.",
       "The archive's own attributes_README states the team is 'still developing complete metadata' for these tables. Documented join guidance: sciname.csv joins on 'sciname'; code_max_resolved.csv joins on hs_version + hs6 + sciname; products.csv should be de-duplicated after joining since some HS6 codes map to multiple product forms; standardized_fao_pop.csv joins on year + iso3c.",
       "Same originator/license/DOI verification caveats as the ARTIS trade and consumption datasets.",
       "ZIP also contains macOS resource-fork artifacts (__MACOSX/ entries)."

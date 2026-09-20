@@ -1,6 +1,6 @@
 {
   "id": "gdd-final-estimates-2018",
-  "title": "Global Dietary Database (GDD) 2018 Final Estimates — Country-Level Dietary & Nutrient Intake (incl. Seafood)",
+  "title": "Global Dietary Database (GDD) 2018 Final Estimates: Country-Level Dietary & Nutrient Intake (incl. Seafood)",
   "abstract": "Modeled, survey-derived estimates of habitual dietary intake for 46+ foods, beverages, and nutrients, disaggregated by country, age, sex, urbanicity, and education level. The local archive contains the full country-level, global, and regional estimate releases (one CSV per dietary factor, e.g. v11 = Total seafoods, v30 = Seafood omega-3 (n-3) fat), plus the official codebook. For the Red Sea nutrition-health domain, the seafood intake (v11) and seafood omega-3 fat (v30) variables for Saudi Arabia (ISO3 SAU) are the primary variables of interest, but the archive includes all other GDD dietary factors as well.",
   "domain": [
     "nutrition-health"
@@ -141,7 +141,7 @@
       "Estimates are model-based (survey-calibrated Bayesian hierarchical models), not direct measurements; country-level values for Saudi Arabia may rely partly on regional/superregion borrowing of strength where local survey data are sparse.",
       "No sub-national or Red-Sea-specific spatial resolution is available; all values are national aggregates for Saudi Arabia, applied uniformly across all five subbasins.",
       "The local archive contains ~46 additional dietary-factor CSVs per estimate level (Country-level/Global/Regional) beyond the two seafood-related variables itemized here (e.g. fruits, vegetables, meats, dairy, energy, macro/micronutrients); only v11 (Total seafoods) and v30 (Seafood omega-3 fat) are cataloged as resources given the domain focus, but the full folder is present locally.",
-      "This source was tagged '[New]' (aspirational, not yet acquired) in the team's Sources - NH.Rmd registry, but the full dataset (~5.7 GB) is already present locally — the Rmd tag appears stale relative to actual holdings."
+      "This source was tagged '[New]' (aspirational, not yet acquired) in the team's Sources - NH.Rmd registry, but the full dataset (~5.7 GB) is already present locally; the Rmd tag appears stale relative to actual holdings."
     ],
     "last_verified": "2026-07-12"
   },

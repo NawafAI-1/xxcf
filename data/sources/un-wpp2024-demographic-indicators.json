@@ -1,7 +1,7 @@
 {
   "id": "un-wpp2024-demographic-indicators",
-  "title": "UN World Population Prospects 2024 — General Demographic Indicators (F01)",
-  "abstract": "United Nations World Population Prospects 2024 revision, General file F01 'Demographic Indicators' — annual population, fertility, mortality, and migration indicators for all countries and regions of the world, 1950-2023 (Estimates sheet), with additional projection-variant sheets to 2100. Includes Saudi Arabia as one of ~300 geographic entities; not Red-Sea or coastal-specific.",
+  "title": "UN World Population Prospects 2024: General Demographic Indicators (F01)",
+  "abstract": "United Nations World Population Prospects 2024 revision, General file F01 'Demographic Indicators': annual population, fertility, mortality, and migration indicators for all countries and regions of the world, 1950-2023 (Estimates sheet), with additional projection-variant sheets to 2100. Includes Saudi Arabia as one of ~300 geographic entities; not Red-Sea or coastal-specific.",
   "domain": [
     "socio-economic"
   ],
@@ -126,7 +126,7 @@
     "status": "raw",
     "known_issues": [
       "Full global file (300 geographic entities, ~21,983 rows in the Estimates sheet alone); Saudi Arabia rows have not been extracted into a Red-Sea-specific subset.",
-      "National-level indicators only — no subnational or coastal-governorate breakdown is possible from this source.",
+      "National-level indicators only; no subnational or coastal-governorate breakdown is possible from this source.",
       "Workbook also contains 13 additional projection-variant sheets (Medium/High/Low/Constant-fertility/etc., to 2100) not itemized in the variables list above; only the historical 'Estimates' sheet (1950-2023) is described here.",
       "Exact UN DESA DOI for WPP2024 not confirmed from the file itself, so left null rather than guessed."
     ],

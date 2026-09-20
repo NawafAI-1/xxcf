@@ -1,6 +1,6 @@
 {
   "id": "artis-seafood-consumption",
-  "title": "ARTIS Seafood Consumption Estimates (Midpoint), 1996–2020",
+  "title": "ARTIS Seafood Consumption Estimates (Midpoint), 1996-2020",
   "abstract": "Global, species-disaggregated apparent seafood consumption estimates by consuming country, reconstructed by the ARTIS project from bilateral trade and production data. Tracks the source country, exporter, and consumer for each flow along with habitat, production method, and consumption source (domestic vs. foreign), across five HS classification revisions spanning 1996-2020.",
   "domain": [
     "production",
@@ -192,7 +192,7 @@
       "Global dataset, not filtered to Saudi Arabia or the Red Sea; must be filtered on consumer_iso3c / exporter_iso3c / source_country_iso3c = 'SAU' for Kingdom-relevant subsets, and even then cannot distinguish Red Sea vs. Arabian Gulf.",
       "This file omits the HS6 code (present in trade.zip) to reduce file size, substituting 'sciname_hs_modified'; joins to product descriptions in attribute_tables.zip must account for this.",
       "Requires joining with the 'artis-attribute-tables' source for population data (per-capita consumption), taxonomic resolution, and country groupings.",
-      "Originator/license/DOI not independently verified — see the same caveat on the 'artis-seafood-trade-matrix' source.",
+      "Originator/license/DOI not independently verified; see the same caveat on the 'artis-seafood-trade-matrix' source.",
       "ZIP also contains macOS resource-fork artifacts (__MACOSX/ entries) alongside the 71 real data files."
     ],
     "last_verified": "2026-07-12"

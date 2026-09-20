@@ -357,7 +357,7 @@ export default function NetworkGraph({ sources }: { sources: Source[] }) {
               <p className="mt-3 text-xs text-slate-600">
                 <span className="font-medium">{selectedLinkTarget.title}</span> lists{' '}
                 <span className="font-medium">{selectedLinkSource.title}</span> in its{' '}
-                <code className="rounded bg-slate-100 px-1 py-0.5">provenance.derived_from</code> field — an explicit,
+                <code className="rounded bg-slate-100 px-1 py-0.5">provenance.derived_from</code> field, an explicit,
                 recorded lineage relationship between the two datasets.
               </p>
             ) : (

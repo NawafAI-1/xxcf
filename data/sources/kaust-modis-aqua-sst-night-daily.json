@@ -1,6 +1,6 @@
 {
   "id": "kaust-modis-aqua-sst-night-daily",
-  "title": "AQUA/MODIS Sea Surface Temperature (Nighttime, 4 micron) Daily L3m — Red Sea",
+  "title": "AQUA/MODIS Sea Surface Temperature (Nighttime, 4 micron) Daily L3m: Red Sea",
   "abstract": "Daily NASA AQUA/MODIS Level-3 mapped (L3m) nighttime sea surface temperature granules (SST4 product, 4-micron shortwave-infrared retrieval, unaffected by daytime sun-glint/reflection) covering the Red Sea, archived as a directory of daily NetCDF granules, a tar bundle of the same granules, and a single time-merged 'combined' NetCDF file.",
   "domain": [
     "environmental"

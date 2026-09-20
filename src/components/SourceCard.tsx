@@ -47,7 +47,7 @@ export default function SourceCard({ source }: { source: Source }) {
           bbox [{w}, {s}, {e}, {n}]
         </span>
         <span>
-          {source.temporal.start}&ndash;{source.temporal.ongoing ? 'present' : source.temporal.end}
+          {source.temporal.start}-{source.temporal.ongoing ? 'present' : source.temporal.end}
         </span>
         <span className="capitalize">{source.quality.status.replace('-', ' ')}</span>
       </div>

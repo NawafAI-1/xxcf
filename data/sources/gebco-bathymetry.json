@@ -1,6 +1,6 @@
 {
   "id": "gebco-bathymetry",
-  "title": "GEBCO Global Bathymetry Grid — Red Sea Extent",
+  "title": "GEBCO Global Bathymetry Grid: Red Sea Extent",
   "abstract": "Annual releases (2019-2025) of the GEBCO global terrain model, a continuous elevation/bathymetry grid at 15 arc-second resolution, clipped to the Red Sea and Gulf of Aden extent. Includes both the elevation grid and the Type Identifier (TID) grid documenting the source/quality of each cell.",
   "domain": [
     "environmental"
@@ -81,7 +81,7 @@
   },
   "provenance": {
     "originator": "GEBCO Compilation Group (IHO-IOC)",
-    "license": "GEBCO terms of use — free for any use with attribution (see GEBCO_Grid_terms_of_use.pdf in the source folder)",
+    "license": "GEBCO terms of use: free for any use with attribution (see GEBCO_Grid_terms_of_use.pdf in the source folder)",
     "citation": "GEBCO Compilation Group. GEBCO Grid. General Bathymetric Chart of the Oceans.",
     "doi": null,
     "source_url": "https://www.gebco.net/",
@@ -90,7 +90,7 @@
   "quality": {
     "status": "analysis-ready",
     "known_issues": [
-      "DOI not recorded per-release — GEBCO issues a distinct DOI for each annual grid, not captured here."
+      "DOI not recorded per-release; GEBCO issues a distinct DOI for each annual grid, not captured here."
     ],
     "last_verified": "2026-04-22"
   },

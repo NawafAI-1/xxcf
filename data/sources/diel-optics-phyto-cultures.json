@@ -91,7 +91,7 @@
   "quality": {
     "status": "analysis-ready",
     "known_issues": [
-      "Not Red-Sea-specific — a general phytoplankton physiology reference study, included for its bio-optical methodology relevance rather than basin coverage."
+      "Not Red-Sea-specific: a general phytoplankton physiology reference study, included for its bio-optical methodology relevance rather than basin coverage."
     ],
     "last_verified": "2023-11-10"
   },

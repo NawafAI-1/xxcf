@@ -39,7 +39,7 @@ const STATUS_HINTS: Record<Source['quality']['status'], string> = {
   'analysis-ready': 'usable as it stands',
   cleaned: 'processed, still needs checks',
   raw: 'needs processing before analysis',
-  deprecated: 'superseded — check before using',
+  deprecated: 'superseded; check before using',
 };
 
 function Card({
@@ -123,7 +123,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
   const doi = value(source.provenance.doi);
   const sourceUrl = value(source.provenance.source_url);
 
-  const period = `${source.temporal.start}–${source.temporal.ongoing ? 'present' : source.temporal.end}`;
+  const period = `${source.temporal.start}-${source.temporal.ongoing ? 'present' : source.temporal.end}`;
   const mailto = source.access.steward.email
     ? `mailto:${source.access.steward.email}?subject=${encodeURIComponent(`Data request: ${source.title}`)}`
     : null;
@@ -200,7 +200,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
         <Fact label="Coverage" value={period} hint={source.temporal.ongoing ? 'still collecting' : 'closed series'} />
         <Fact label="Frequency" value={source.temporal.frequency} hint="how often it updates" />
-        <Fact label="Resolution" value={source.spatial.resolution || '—'} hint="spatial grain" />
+        <Fact label="Resolution" value={source.spatial.resolution || 'Not recorded'} hint="spatial grain" />
         <Fact
           label="Extent"
           value={global ? 'Global' : bboxExtentLabel(bbox)}
@@ -269,7 +269,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
                       <td className="py-3 pr-3 text-slate-700">{r.format}</td>
                       <td className="py-3 pr-3 text-slate-700">{r.size}</td>
                       <td className="py-3 pr-3 text-right tabular-nums text-slate-700">
-                        {r.n_rows ? r.n_rows.toLocaleString('en-US') : '—'}
+                        {r.n_rows ? r.n_rows.toLocaleString('en-US') : 'n/a'}
                       </td>
                     </tr>
                   ))}
@@ -401,7 +401,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
                     </a>
                   </>
                 ) : (
-                  <span className="text-slate-400"> — no contact recorded</span>
+                  <span className="text-slate-400"> (no contact recorded)</span>
                 )}
               </Row>
               <Row label="How to request">{source.access.how_to_request}</Row>
@@ -412,7 +412,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
             <dl>
               <Row label="Processing state">
                 <span className="capitalize">{source.quality.status.replace('-', ' ')}</span>
-                <span className="text-slate-500"> — {STATUS_HINTS[source.quality.status]}</span>
+                <span className="text-slate-500"> ({STATUS_HINTS[source.quality.status]})</span>
               </Row>
               <Row label="Last verified">{source.quality.last_verified}</Row>
             </dl>

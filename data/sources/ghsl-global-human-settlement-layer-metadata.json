@@ -1,6 +1,6 @@
 {
   "id": "ghsl-global-human-settlement-layer-metadata",
-  "title": "Copernicus Global Human Settlement Layer (GHSL) — Metadata Record",
+  "title": "Copernicus Global Human Settlement Layer (GHSL): Metadata Record",
   "abstract": "Metadata record describing the Copernicus Global Human Settlement Layer (GHSL), a global gridded dataset of built-up surface and population produced by the European Commission Joint Research Centre (JRC) from Sentinel-2/Landsat imagery and census data. Only the dataset metadata record has been downloaded locally; the underlying GHS-BUILT-S and GHS-POP raster grids themselves (2.0 GB and 4.9 GB global downloads respectively) have not yet been acquired.",
   "domain": [
     "socio-economic"

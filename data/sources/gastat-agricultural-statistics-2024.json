@@ -1,6 +1,6 @@
 {
   "id": "gastat-agricultural-statistics-2024",
-  "title": "GASTAT Agricultural Statistics 2024 — Saudi Arabia",
+  "title": "GASTAT Agricultural Statistics 2024: Saudi Arabia",
   "abstract": "Annual national agricultural statistics report published by the General Authority for Statistics (GASTAT), covering crop area/production by administrative region (cereals, open-field and greenhouse vegetables, cut flowers, palm and other perennial trees), agricultural inputs (fertilizer, pesticides), organic agriculture, agricultural loans and bank credit, and land-use indicators. The workbook contains 53 sheets organized into 12 sections plus an index and summary.",
   "domain": [
     "production"
@@ -108,7 +108,7 @@
   "quality": {
     "status": "raw",
     "known_issues": [
-      "No fisheries or aquaculture section is present in this workbook despite being catalogued under the Production domain via the KAUST Sources registry — all 12 sections cover crop agriculture (cereals, vegetables, cut flowers, palm/perennial trees), inputs, organic farming, agricultural credit, and land-use indicators. Included here because it appears as a local file referenced by the team's Sources doc; consider re-scoping or excluding from seafood-production analyses.",
+      "No fisheries or aquaculture section is present in this workbook despite being catalogued under the Production domain via the KAUST Sources registry; all 12 sections cover crop agriculture (cereals, vegetables, cut flowers, palm/perennial trees), inputs, organic farming, agricultural credit, and land-use indicators. Included here because it appears as a local file referenced by the team's Sources doc; consider re-scoping or excluding from seafood-production analyses.",
       "n_rows (1,100) is a rough estimate based on typical per-sheet row counts (~20 rows x ~51 data sheets); the workbook was not fully parsed sheet-by-sheet, so the true total is uncertain.",
       "Only a single edition (2024) is present locally; no historical time series was found for this file."
     ],

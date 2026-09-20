@@ -6,7 +6,7 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Red Sea Marine Data Catalog',
   description:
-    'An inventory of marine datasets covering the Red Sea basin — what exists, how ready it is to use, where it reaches, and where the gaps are.',
+    'An inventory of marine datasets covering the Red Sea basin: what exists, how ready it is to use, where it reaches, and where the gaps are.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -18,7 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <footer className="mt-10 border-t border-slate-200 bg-white">
           <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-6 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
             <p>
-              Red Sea Marine Data Catalog — a catalog of KAUST Red Sea research data holdings.
+              Red Sea Marine Data Catalog. A catalog of KAUST Red Sea research data holdings.
               Records state their own known limitations; verify licences and DOIs before
               publication.
             </p>

@@ -1,6 +1,6 @@
 {
   "id": "who-gho-under5-mortality-rate",
-  "title": "WHO Global Health Observatory — Under-Five Mortality Rate (All Countries, 1950-Present)",
+  "title": "WHO Global Health Observatory: Under-Five Mortality Rate (All Countries, 1950-Present)",
   "abstract": "WHO Global Health Observatory (GHO) export of the under-five mortality rate indicator (MDG_0000000007: probability of dying by age 5, per 1,000 live births), by country, sex, and year, for all UN member states from 1950 to the most recent estimate year, with upper/lower 95% uncertainty bounds.",
   "domain": [
     "nutrition-health"

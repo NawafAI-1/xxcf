@@ -1,6 +1,6 @@
 {
   "id": "global-intake-inadequacies-nutrient-estimates",
-  "title": "Global Estimation of Dietary Micronutrient Inadequacies — National & Subnational Prevalence Estimates",
+  "title": "Global Estimation of Dietary Micronutrient Inadequacies: National & Subnational Prevalence Estimates",
   "abstract": "Modeled national and subnational prevalence estimates of inadequate micronutrient intake (15 micronutrients including calcium, iron, zinc, vitamin B12, iodine, etc.) for most countries worldwide, including Saudi Arabia, based on the modeling analysis published in The Lancet Global Health (Passarelli et al. 2024). Includes the full companion GitHub repository (code, data inputs, figures, tables, and Shiny app source) as archived locally.",
   "domain": [
     "nutrition-health"
@@ -117,7 +117,7 @@
     "how_to_request": "Publicly available on GitHub (openwashdata-style open repository) accompanying the published paper; no request required. Local mirror is a full clone of the 'global_intake_inadequacies' repository."
   },
   "provenance": {
-    "originator": "Passarelli, Free, Shepon, Beal, Batis, Golden — emLab, UC Santa Barbara / Tufts University",
+    "originator": "Passarelli, Free, Shepon, Beal, Batis, Golden (emLab, UC Santa Barbara / Tufts University)",
     "license": "Not stated in repository; treat as open per accompanying open-access publication (verify before redistribution).",
     "citation": "Passarelli S, Free CM, Shepon A, Beal T, Batis C, Golden CD (2024) Global estimation of dietary micronutrient inadequacies: a modeling analysis. The Lancet Global Health 12(10):e1590-e1599.",
     "doi": "10.1016/S2214-109X(24)00276-6",

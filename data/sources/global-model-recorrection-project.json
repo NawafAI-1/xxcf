@@ -1,6 +1,6 @@
 {
   "id": "global-model-recorrection-project",
-  "title": "Global Model Recorrection Project — Site-Level Chlorophyll, SST Climatology & NPP Extractions",
+  "title": "Global Model Recorrection Project: Site-Level Chlorophyll, SST Climatology & NPP Extractions",
   "abstract": "Working dataset for a project recalibrating a global chlorophyll/productivity model, comprising site-level chlorophyll time series extracted at ~2,000 reef survey locations (from satellite chlorophyll products, at both native and 5 km resampled resolution), monthly Coral Reef Watch composites, NOAA OI SST monthly climatologies (1981-2010 and 1991-2020 baselines), and net primary productivity (NPP) outputs, all indexed to the same site list.",
   "domain": [
     "environmental"
@@ -193,7 +193,7 @@
       "name": "KAUST research team (1st Project)",
       "email": ""
     },
-    "how_to_request": "Internal working data for an active model recalibration project — contact the project lead for access and current status."
+    "how_to_request": "Internal working data for an active model recalibration project; contact the project lead for access and current status."
   },
   "provenance": {
     "originator": "KAUST, derived from NASA MODIS/AQUA chlorophyll, NOAA Coral Reef Watch, and NOAA OI SST source products",
@@ -208,8 +208,8 @@
   "quality": {
     "status": "raw",
     "known_issues": [
-      "Site list is global, not Red-Sea-specific — most of the ~2,000 extraction sites (visible from filename coordinates) fall outside the Red Sea (Caribbean, Indo-Pacific, etc.); needs filtering to the Red Sea subset for basin-specific use.",
-      "No documentation file found describing the exact chlorophyll source product or extraction methodology — inferred from folder/file naming only."
+      "Site list is global, not Red-Sea-specific; most of the ~2,000 extraction sites (visible from filename coordinates) fall outside the Red Sea (Caribbean, Indo-Pacific, etc.); needs filtering to the Red Sea subset for basin-specific use.",
+      "No documentation file found describing the exact chlorophyll source product or extraction methodology, inferred from folder/file naming only."
     ],
     "last_verified": "2026-04-22"
   },

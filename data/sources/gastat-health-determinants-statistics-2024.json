@@ -96,7 +96,7 @@
     "status": "raw",
     "known_issues": [
       "Multi-sheet XLSX with 25 tables in wide, human-readable (not tidy) layout; would require reshaping before analysis.",
-      "A near-duplicate file 'Health Determinants Statistics Publication 2024 EN (1).xlsx' (identical file size, 205,054 bytes) also exists in the same folder; only the canonical (non-'(1)') filename is cataloged as the resource — the two should be diffed/deduplicated before archiving.",
+      "A near-duplicate file 'Health Determinants Statistics Publication 2024 EN (1).xlsx' (identical file size, 205,054 bytes) also exists in the same folder; only the canonical (non-'(1)') filename is cataloged as the resource; the two should be diffed/deduplicated before archiving.",
       "No sub-national spatial detail beyond GASTAT's administrative regions, which do not align with Red Sea subbasin boundaries; applied uniformly across all five subbasins."
     ],
     "last_verified": "2026-07-12"

@@ -1,6 +1,6 @@
 {
   "id": "artis-seafood-trade-matrix",
-  "title": "ARTIS Seafood Trade Matrix — Species-Disaggregated Bilateral Trade (Midpoint Estimates), 1996–2020",
+  "title": "ARTIS Seafood Trade Matrix: Species-Disaggregated Bilateral Trade (Midpoint Estimates), 1996-2020",
   "abstract": "Global, species-disaggregated bilateral seafood trade flows reconstructed from UN Comtrade HS-code trade statistics by the ARTIS (Aquatic Resource Trade in Species) project. Records product weight and live-weight-equivalent trade between exporting, importing, and ultimate source countries, by scientific name, habitat, and production method (capture/aquaculture), across five Harmonized System classification revisions (HS96, HS02, HS07, HS12, HS17) spanning 1996-2020.",
   "domain": [
     "production",
@@ -182,7 +182,7 @@
   "quality": {
     "status": "raw",
     "known_issues": [
-      "The ZIP contains 71 separate CSVs, one per HS-classification/year combination (HS96: 1996-2020, HS02: 2002-2020, HS07: 2007-2020, HS12: 2012-2020, HS17: 2017-2020). Coverage years overlap by design across HS revisions (ARTIS reprocesses recent years under multiple HS systems) — naive concatenation of all files will duplicate trade flows; a single HS version per year must be selected before aggregating.",
+      "The ZIP contains 71 separate CSVs, one per HS-classification/year combination (HS96: 1996-2020, HS02: 2002-2020, HS07: 2007-2020, HS12: 2012-2020, HS17: 2017-2020). Coverage years overlap by design across HS revisions (ARTIS reprocesses recent years under multiple HS systems). Naive concatenation of all files will duplicate trade flows; a single HS version per year must be selected before aggregating.",
       "n_rows (~90 million) is an order-of-magnitude estimate derived from total uncompressed size (~11.8 GB) and average observed row length; it was not computed exactly because of file size.",
       "Global dataset, not filtered to Saudi Arabia or the Red Sea; must be filtered on importer_iso3c / exporter_iso3c / source_country_iso3c = 'SAU' for Kingdom-relevant subsets. Even filtered to Saudi Arabia, the data cannot distinguish Red Sea vs. Arabian Gulf origin/destination.",
       "Requires joining with the 'artis-attribute-tables' source (attribute_tables.zip) for full taxonomic resolution, product descriptions, and country groupings.",

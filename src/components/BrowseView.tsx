@@ -116,7 +116,7 @@ export default function BrowseView({ sources }: { sources: Source[] }) {
             <div className="rounded-lg border border-dashed border-slate-300 bg-white p-10 text-center">
               <p className="text-sm font-medium text-slate-700">Nothing matches these filters.</p>
               <p className="mt-1 text-sm text-slate-500">
-                Try clearing a facet, or search for a theme instead — that gap may itself be worth
+                Try clearing a facet, or search for a theme instead. That gap may itself be worth
                 reporting.
               </p>
             </div>

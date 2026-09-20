@@ -1,6 +1,6 @@
 {
   "id": "allen-coral-atlas-red-sea",
-  "title": "Allen Coral Atlas — Benthic, Geomorphic, and Reef Extent Maps (Red Sea & Gulf of Aden)",
+  "title": "Allen Coral Atlas: Benthic, Geomorphic, and Reef Extent Maps (Red Sea & Gulf of Aden)",
   "abstract": "High-resolution (bathymetry-corrected satellite imagery) benthic habitat, geomorphic zonation, and reef extent maps for the Red Sea and Gulf of Aden region, produced by the Allen Coral Atlas program. Includes vector layers (benthic cover class, geomorphic class, reef extent boundary) plus a summary statistics table of cover fractions and area by class.",
   "domain": [
     "ecological"
@@ -142,7 +142,7 @@
   },
   "provenance": {
     "originator": "Allen Coral Atlas (Arizona State University, Coral Reef Alliance, Vulcan Inc., Planet)",
-    "license": "Allen Coral Atlas data license — attribution required, see included citation guidance PDF",
+    "license": "Allen Coral Atlas data license: attribution required, see included citation guidance PDF",
     "citation": "Allen Coral Atlas. (2023). Imagery, maps and monitoring of the world's tropical coral reefs.",
     "doi": "10.5281/zenodo.3833242",
     "source_url": "https://allencoralatlas.org/",
