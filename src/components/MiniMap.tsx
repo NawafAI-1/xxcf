@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { basemapStyle } from '@/lib/basemap';
+import { BASEMAP_STYLE_URL, withBasemap } from '@/lib/basemap';
 import { type BBox, bboxPolygon, isGlobalScale, spotlightMask } from '@/lib/spatial';
 
 interface MiniMapProps {
@@ -37,6 +37,7 @@ export default function MiniMap({ bbox, color = '#0f766e' }: MiniMapProps) {
 
   useEffect(() => {
     let cancelled = false;
+    let cleanupBasemap: (() => void) | undefined;
 
     (async () => {
       const maplibregl = (await import('maplibre-gl')).default;
@@ -44,7 +45,7 @@ export default function MiniMap({ bbox, color = '#0f766e' }: MiniMapProps) {
 
       const map = new maplibregl.Map({
         container: containerRef.current,
-        style: basemapStyle({ labelled: false }),
+        style: BASEMAP_STYLE_URL,
         attributionControl: false,
         // The page scrolls past this map; hijacking the wheel over it strands
         // readers mid-page. Zoom lives on the buttons instead.
@@ -57,7 +58,7 @@ export default function MiniMap({ bbox, color = '#0f766e' }: MiniMapProps) {
       map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
       map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
 
-      map.on('load', () => {
+      const addOverlays = () => {
         if (cancelled) return;
         fit(map, false);
 
@@ -93,7 +94,9 @@ export default function MiniMap({ bbox, color = '#0f766e' }: MiniMapProps) {
           paint: { 'line-color': color, 'line-width': 2 },
           layout: { 'line-join': 'round' },
         });
-      });
+      };
+
+      cleanupBasemap = withBasemap(map, { addOverlays, labelled: false });
 
       // "Reset view" appears only after the reader moves the map themselves.
       // Listening to moveend would catch the opening fitBounds too, so the
@@ -113,6 +116,7 @@ export default function MiniMap({ bbox, color = '#0f766e' }: MiniMapProps) {
 
     return () => {
       cancelled = true;
+      cleanupBasemap?.();
       mapRef.current?.remove();
       mapRef.current = null;
     };
@@ -120,7 +124,7 @@ export default function MiniMap({ bbox, color = '#0f766e' }: MiniMapProps) {
   }, [bbox.join(','), color]);
 
   return (
-    <div className="relative h-72 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100 sm:h-80">
+    <div className="relative h-72 w-full overflow-hidden rounded-xl border border-slate-200 bg-[#eaf1f6] sm:h-80">
       <div ref={containerRef} className="h-full w-full" />
 
       <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-2 rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm ring-1 ring-slate-200 backdrop-blur">

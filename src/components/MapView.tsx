@@ -5,7 +5,7 @@ import type { Map as MapLibreMap, MapGeoJSONFeature } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { Source, Subbasin } from '@/lib/types';
 import { DOMAIN_COLORS } from '@/lib/types';
-import { basemapStyle } from '@/lib/basemap';
+import { BASEMAP_STYLE_URL, withBasemap } from '@/lib/basemap';
 import { type BBox, bboxToRing, isGlobalScale } from '@/lib/spatial';
 import SourceCard from './SourceCard';
 
@@ -44,6 +44,7 @@ export default function MapView({ sources }: { sources: Source[] }) {
 
   useEffect(() => {
     let cancelled = false;
+    let cleanupBasemap: (() => void) | undefined;
 
     (async () => {
       const maplibregl = (await import('maplibre-gl')).default;
@@ -51,7 +52,7 @@ export default function MapView({ sources }: { sources: Source[] }) {
 
       const map = new maplibregl.Map({
         container: containerRef.current,
-        style: basemapStyle(),
+        style: BASEMAP_STYLE_URL,
         center: [38.5, 20.5],
         zoom: 4.2,
         attributionControl: false,
@@ -62,7 +63,7 @@ export default function MapView({ sources }: { sources: Source[] }) {
       map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
       map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
 
-      map.on('load', () => {
+      const addOverlays = () => {
         const rectangleFeatures = localSources.map((s) => ({
           type: 'Feature' as const,
           properties: { id: s.id, color: DOMAIN_COLORS[s.domain[0]] },
@@ -123,11 +124,14 @@ export default function MapView({ sources }: { sources: Source[] }) {
             pick(group.map((s) => s.id));
           });
         }
-      });
+      };
+
+      cleanupBasemap = withBasemap(map, { addOverlays });
     })();
 
     return () => {
       cancelled = true;
+      cleanupBasemap?.();
       mapRef.current?.remove();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -136,7 +140,7 @@ export default function MapView({ sources }: { sources: Source[] }) {
   return (
     <div>
       <div className="relative flex h-[70vh] gap-4">
-        <div ref={containerRef} className="h-full flex-1 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-sm" />
+        <div ref={containerRef} className="h-full flex-1 overflow-hidden rounded-xl border border-slate-200 bg-[#eaf1f6] shadow-sm" />
         {(selected || pickerOptions) && (
           <div className="w-80 shrink-0 overflow-y-auto">
             <button
