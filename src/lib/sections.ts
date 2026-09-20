@@ -17,7 +17,6 @@ export const SECTIONS: Section[] = [
   { href: '/map', label: 'Map', accent: '#0891b2' },
   { href: '/timeline', label: 'Timeline', accent: '#0369a1' },
   { href: '/coverage', label: 'Coverage', accent: '#b45309' },
-  { href: '/joins', label: 'Joins', accent: '#0d9488' },
   { href: '/network', label: 'Network', accent: '#7c3aed' },
 ];
 

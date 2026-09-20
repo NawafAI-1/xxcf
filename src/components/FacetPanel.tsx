@@ -14,9 +14,18 @@ export interface Facets {
    * a panel listing them all would bury the four facets that do belong there.
    */
   theme: string[];
+  /** A single year, arriving from the timeline: records covering it. */
+  year: string[];
 }
 
-export const EMPTY_FACETS: Facets = { domain: [], subbasin: [], access: [], quality: [], theme: [] };
+export const EMPTY_FACETS: Facets = {
+  domain: [],
+  subbasin: [],
+  access: [],
+  quality: [],
+  theme: [],
+  year: [],
+};
 
 function toggle<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
@@ -92,7 +101,8 @@ export default function FacetPanel({
         facets.subbasin.length ||
         facets.access.length ||
         facets.quality.length ||
-        facets.theme.length) > 0 && (
+        facets.theme.length ||
+        facets.year.length) > 0 && (
         <button
           onClick={() => onChange(EMPTY_FACETS)}
           className="text-xs font-medium text-blue-600 hover:underline"

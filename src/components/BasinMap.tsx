@@ -3,6 +3,7 @@ import land from '@/lib/basin-land.json';
 import type { Source } from '@/lib/types';
 import { DOMAIN_COLORS } from '@/lib/types';
 import { type BBox, isGlobalScale } from '@/lib/spatial';
+import { siteMentions } from '@/lib/sites';
 
 /**
  * A real map of the basin, drawn as inline SVG from Natural Earth coastline
@@ -142,6 +143,10 @@ export default function BasinMap({ sources, focus, compact = false }: BasinMapPr
   const view = box && !focusGlobal ? viewFor(box) : BASIN_VIEW;
   const { width, height, x, y } = projector(view);
   const clusters = focus ? [] : cluster(sources, view);
+  const sites = siteMentions(focus ? [focus] : sources).filter(
+    ({ site }) =>
+      site.lon > view.west && site.lon < view.east && site.lat > view.south && site.lat < view.north
+  );
   const accent = focus ? DOMAIN_COLORS[focus.domain[0]] : '#0f766e';
 
   return (
@@ -166,6 +171,16 @@ export default function BasinMap({ sources, focus, compact = false }: BasinMapPr
             <stop offset="0%" stopColor="#f3ead9" />
             <stop offset="100%" stopColor="#e7dac2" />
           </linearGradient>
+          <mask id="seaOnly">
+            <rect width={width} height={height} fill="#ffffff" />
+            {LAND.features.map((feature) => (
+              <path
+                key={`mask-${feature.properties.name}`}
+                d={featurePath(feature.geometry, { width, height, x, y })}
+                fill="#000000"
+              />
+            ))}
+          </mask>
         </defs>
 
         <rect width={width} height={height} fill="url(#sea)" />
@@ -223,7 +238,10 @@ export default function BasinMap({ sources, focus, compact = false }: BasinMapPr
           ))}
         </g>
 
-        {/* One record's footprint. */}
+        {/* One record's footprint, clipped to the sea. A bounding box drawn
+            whole covers two countries and claims a reach over land that no
+            marine dataset has; masking the land out shows the water it is
+            actually about. */}
         {focus && box && !focusGlobal ? (
           <g>
             <rect
@@ -232,10 +250,8 @@ export default function BasinMap({ sources, focus, compact = false }: BasinMapPr
               width={Math.max(x(box[2]) - x(box[0]), 4)}
               height={Math.max(y(box[1]) - y(box[3]), 4)}
               fill={accent}
-              fillOpacity={0.22}
-              stroke="#ffffff"
-              strokeWidth="4"
-              rx="4"
+              fillOpacity={0.35}
+              mask="url(#seaOnly)"
             />
             <rect
               x={x(box[0])}
@@ -244,11 +260,43 @@ export default function BasinMap({ sources, focus, compact = false }: BasinMapPr
               height={Math.max(y(box[1]) - y(box[3]), 4)}
               fill="none"
               stroke={accent}
-              strokeWidth="2"
-              rx="4"
+              strokeWidth="1.5"
+              strokeDasharray="6 4"
+              strokeOpacity="0.65"
+              rx="3"
             />
           </g>
         ) : null}
+
+        {/* The places the records name as where the work happened. */}
+        <g>
+          {sites.map(({ site, sources: named }) => (
+            <g key={site.name}>
+              <title>
+                {`${site.name}: named in ${named.length} record${named.length === 1 ? '' : 's'}`}
+              </title>
+              <circle cx={x(site.lon)} cy={y(site.lat)} r="4.5" fill="#ffffff" fillOpacity="0.9" />
+              <circle
+                cx={x(site.lon)}
+                cy={y(site.lat)}
+                r="2.5"
+                fill="#1f2937"
+                fillOpacity="0.75"
+              />
+              <text
+                x={x(site.lon) + 7}
+                y={y(site.lat) + 3.5}
+                fontSize="10"
+                fill="#374151"
+                stroke="#ffffff"
+                strokeWidth="2.5"
+                paintOrder="stroke"
+              >
+                {site.name}
+              </text>
+            </g>
+          ))}
+        </g>
 
         {/* Every location that holds data. */}
         {clusters.map((group) => {
