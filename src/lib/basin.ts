@@ -65,3 +65,55 @@ export function profileExtremes(bands: LatitudeBand[]) {
     thinnestTo: thinnest.length ? thinnest[thinnest.length - 1].lat + BAND_STEP : BAND_MIN,
   };
 }
+
+export interface ThinStretch {
+  from: number;
+  to: number;
+  count: number;
+  /** Records that stop within reach of the stretch and could be extended. */
+  nearby: Source[];
+  /** Records that already reach into it, basin-wide products included. */
+  covering: Source[];
+}
+
+/**
+ * The least observed run of the basin, and the records nearest to it.
+ *
+ * This is a prioritisation aid, not a prediction: it says where the catalogue
+ * is thinnest and which existing work sits close enough that extending it, or
+ * subsetting a wider product, would cover the gap. Whether those records
+ * actually transfer to that water is a question for the people who made them.
+ */
+export function thinStretch(sources: Source[], reachDegrees = 2): ThinStretch | null {
+  const bands = latitudeProfile(sources);
+  if (bands.length === 0) return null;
+
+  const { min } = profileExtremes(bands);
+  const thin = bands.filter((b) => b.count === min);
+  if (thin.length === 0) return null;
+
+  const from = thin[0].lat;
+  const to = thin[thin.length - 1].lat + BAND_STEP;
+
+  const local = sources.filter((s) => s.spatial.bbox && !isGlobalScale(s.spatial.bbox as BBox));
+  const covering = sources.filter((s) => {
+    if (!s.spatial.bbox) return false;
+    const [, south, , north] = s.spatial.bbox as BBox;
+    return south <= to && north >= from;
+  });
+
+  const nearby = local
+    .filter((s) => {
+      const [, south, , north] = s.spatial.bbox as BBox;
+      if (south <= to && north >= from) return false; // already there
+      const distance = south > to ? south - to : from - north;
+      return distance <= reachDegrees;
+    })
+    .sort((a, b) => {
+      const aGap = (a.spatial.bbox as BBox)[1] - to;
+      const bGap = (b.spatial.bbox as BBox)[1] - to;
+      return Math.abs(aGap) - Math.abs(bGap);
+    });
+
+  return { from, to, count: min, nearby, covering };
+}

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getAllSources } from '@/lib/sources';
-import { latitudeProfile, profileExtremes } from '@/lib/basin';
+import { latitudeProfile, profileExtremes, thinStretch } from '@/lib/basin';
+import { siteMentions } from '@/lib/sites';
 import { type BBox, isGlobalScale } from '@/lib/spatial';
 import { DOMAIN_COLORS } from '@/lib/types';
 import BasinMap from '@/components/BasinMap';
@@ -35,6 +36,8 @@ export default function WherePage() {
   const { max, min } = profileExtremes(profile);
   const widest = profile.find((b) => b.count === max);
   const thinnest = profile.find((b) => b.count === min);
+  const thin = thinStretch(sources);
+  const sites = siteMentions(sources);
 
   return (
     <div className="space-y-6">
@@ -87,6 +90,70 @@ export default function WherePage() {
               catalogue for where to survey next.
             </p>
           </section>
+
+          {thin && (
+            <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h2 className="text-base font-semibold text-slate-900">Where to look next</h2>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                The stretch from {thin.from.toFixed(1)}&deg;N to {thin.to.toFixed(1)}&deg;N is the
+                least observed in the basin, with {thin.count} datasets reaching it. These records
+                sit closest to that water, so extending a survey or subsetting a wider product is
+                the cheapest way to cover it.
+              </p>
+
+              {thin.nearby.length > 0 && (
+                <>
+                  <p className="mt-4 text-xs font-medium uppercase tracking-wide text-slate-500">
+                    Stops just short of it
+                  </p>
+                  <ul className="mt-2 space-y-1.5">
+                    {thin.nearby.slice(0, 5).map((s) => (
+                      <li key={s.id}>
+                        <Link
+                          href={`/sources/${s.id}`}
+                          className="flex items-start gap-2 text-sm text-slate-700 transition hover:text-teal-800"
+                        >
+                          <span
+                            className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+                            style={{ backgroundColor: DOMAIN_COLORS[s.domain[0]] }}
+                            aria-hidden
+                          />
+                          <span>{s.title}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+
+              <p className="mt-4 text-xs leading-relaxed text-slate-500">
+                A prioritisation aid, not a prediction. Whether any of these actually transfer to
+                that water is a question for the people who made them.
+              </p>
+            </section>
+          )}
+
+          {sites.length > 0 && (
+            <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h2 className="text-base font-semibold text-slate-900">Field sites named in the records</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Marked on the map. A place appears only because a record names it in its own words,
+                not because of a region tag.
+              </p>
+              <ul className="mt-3 flex flex-wrap gap-1.5">
+                {sites.map(({ site, sources: named }) => (
+                  <li
+                    key={site.name}
+                    className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700"
+                    title={named.map((s) => s.title).join('; ')}
+                  >
+                    {site.name}
+                    <span className="ml-1 tabular-nums text-slate-500">{named.length}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           {offFrame.length > 0 && (
             <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">

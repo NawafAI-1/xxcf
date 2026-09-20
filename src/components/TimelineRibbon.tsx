@@ -47,22 +47,28 @@ export default function TimelineRibbon({ timeline }: { timeline: Timeline }) {
         <p className="mt-1 text-sm text-slate-600">
           Bar height is how many datasets cover each year. A bar is teal where all five domains are
           represented and slate where they are not, so the thin, pale years on the left are the ones
-          an integrated question cannot reach.
+          an integrated question cannot reach. Click any year to open the records covering it.
         </p>
         <div className="mt-4 flex h-24 items-end gap-px">
           {years.map((entry) => {
             const complete = entry.domains === 5;
             return (
-              <div
+              <Link
                 key={entry.year}
+                href={`/browse?year=${entry.year}`}
                 title={`${entry.year}: ${entry.datasets} dataset${
                   entry.datasets === 1 ? '' : 's'
-                }, ${entry.domains} of 5 domains`}
-                className={`flex-1 rounded-t-[2px] transition ${
-                  complete ? 'bg-teal-700 hover:bg-teal-500' : 'bg-slate-400 hover:bg-slate-500'
-                }`}
-                style={{ height: `${Math.max((entry.datasets / peakDatasets) * 100, 3)}%` }}
-              />
+                }, ${entry.domains} of 5 domains. Opens them.`}
+                aria-label={`${entry.year}: open the ${entry.datasets} datasets covering this year`}
+                className="flex flex-1 items-end self-stretch"
+              >
+                <span
+                  className={`w-full rounded-t-[2px] transition ${
+                    complete ? 'bg-teal-700 hover:bg-teal-500' : 'bg-slate-400 hover:bg-slate-500'
+                  }`}
+                  style={{ height: `${Math.max((entry.datasets / peakDatasets) * 100, 3)}%` }}
+                />
+              </Link>
             );
           })}
         </div>
@@ -101,10 +107,10 @@ export default function TimelineRibbon({ timeline }: { timeline: Timeline }) {
         </div>
 
         <div className="overflow-x-auto">
-          <div className="min-w-[46rem]">
+          <div className="min-w-[56rem]">
             {/* Axis, repeated at the top so long groups stay readable. */}
             <div className="mb-2 flex items-end gap-3 border-b border-slate-200 pb-1">
-              <span className="w-56 shrink-0" />
+              <span className="w-80 shrink-0" />
               <div className="relative h-4 flex-1">
                 {ticks.map((year) => (
                   <span
@@ -127,39 +133,79 @@ export default function TimelineRibbon({ timeline }: { timeline: Timeline }) {
                   </span>
                 </p>
 
-                <ul className="space-y-1">
-                  {group.rows.map((row) => (
-                    <li key={`${group.domain}-${row.id}`}>
-                      <Link
-                        href={`/sources/${row.id}`}
-                        className="group flex items-center gap-3 rounded-md py-0.5 transition hover:bg-slate-50"
-                      >
-                        <span className="w-56 shrink-0 truncate text-xs text-slate-700" title={row.title}>
-                          {row.title}
-                        </span>
-                        <span className="relative h-4 flex-1">
-                          {/* Decade gridlines sit under the bars, one step off the surface. */}
-                          {ticks.map((year) => (
-                            <span
-                              key={year}
-                              aria-hidden
-                              className="absolute top-0 h-full w-px bg-slate-100"
-                              style={{ left: `${((year - minYear) / span) * 100}%` }}
-                            />
-                          ))}
+                <ul>
+                  {group.rows.map((row) => {
+                    const left = ((row.start - minYear) / span) * 100;
+                    const right = ((row.end + 1 - minYear) / span) * 100;
+                    // The period reads at the end of its own bar, unless the bar
+                    // runs to the edge, where it would be clipped.
+                    const labelInside = right > 86;
+                    return (
+                      <li key={`${group.domain}-${row.id}`}>
+                        <Link
+                          href={`/sources/${row.id}`}
+                          className="group flex items-center gap-3 rounded-md py-1 transition hover:bg-slate-50"
+                        >
                           <span
-                            className="absolute top-0.5 h-3 rounded-[3px] transition group-hover:brightness-110"
-                            style={{
-                              ...position(row.start, row.end),
-                              backgroundColor: DOMAIN_COLORS[group.domain],
-                              opacity: row.status === 'analysis-ready' ? 1 : 0.55,
-                            }}
-                            title={`${row.title}: ${row.start}-${row.ongoing ? 'present' : row.end}, ${row.status.replace('-', ' ')}`}
-                          />
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
+                            className="w-80 shrink-0 truncate text-[11px] leading-4 text-slate-700 group-hover:text-teal-800"
+                            title={row.title}
+                          >
+                            {row.title}
+                          </span>
+                          <span className="relative h-5 flex-1">
+                            {ticks.map((year) => (
+                              <span
+                                key={year}
+                                aria-hidden
+                                className="absolute top-0 h-full w-px bg-slate-100"
+                                style={{ left: `${((year - minYear) / span) * 100}%` }}
+                              />
+                            ))}
+                            <span
+                              aria-hidden
+                              className="absolute top-0 h-full w-px bg-slate-200"
+                              style={{ left: `${((maxYear - minYear) / span) * 100}%` }}
+                            />
+                            <span
+                              className={`absolute top-1 h-3 transition group-hover:brightness-110 ${
+                                row.ongoing ? 'rounded-l-[3px]' : 'rounded-[3px]'
+                              }`}
+                              style={{
+                                left: `${left}%`,
+                                width: `${Math.max(right - left, 0.6)}%`,
+                                backgroundColor: DOMAIN_COLORS[group.domain],
+                                opacity: row.status === 'analysis-ready' ? 1 : 0.5,
+                              }}
+                              title={`${row.title}: ${row.start}-${row.ongoing ? 'present' : row.end}, ${row.status.replace('-', ' ')}`}
+                            />
+                            {row.ongoing ? (
+                              <span
+                                aria-hidden
+                                className="absolute top-[7px] text-[9px] leading-none"
+                                style={{
+                                  left: `calc(${right}% + 1px)`,
+                                  color: DOMAIN_COLORS[group.domain],
+                                }}
+                              >
+                                &#9654;
+                              </span>
+                            ) : null}
+                            <span
+                              className="absolute top-0.5 whitespace-nowrap text-[10px] tabular-nums text-slate-400"
+                              style={
+                                labelInside
+                                  ? { right: `calc(${100 - left}% + 6px)` }
+                                  : { left: `calc(${right}% + ${row.ongoing ? 10 : 4}px)` }
+                              }
+                            >
+                              {row.start}
+                              {row.ongoing ? '-' : `-${row.end}`}
+                            </span>
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             ))}
@@ -167,8 +213,8 @@ export default function TimelineRibbon({ timeline }: { timeline: Timeline }) {
         </div>
 
         <p className="mt-4 text-xs text-slate-500">
-          Solid bars are analysis-ready records; faded bars still need processing. A dataset in two
-          domains appears in both rows.
+          Solid bars are analysis-ready records; faded bars still need processing. A bar ending in
+          &#9654; is still collecting. A dataset in two domains appears in both rows.
         </p>
       </section>
     </div>

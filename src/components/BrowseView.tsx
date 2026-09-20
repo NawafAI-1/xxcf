@@ -15,6 +15,7 @@ const FACET_LABELS: Record<FacetKey, string> = {
   access: 'Access',
   quality: 'Status',
   theme: 'Theme',
+  year: 'Year',
 };
 
 /**
@@ -41,6 +42,7 @@ function facetsFromLocation(): Facets {
     // than checked against a list. Splitting on commas would break the theme
     // names that contain one.
     theme: params.getAll('theme').map((t) => t.trim()).filter(Boolean),
+    year: params.getAll('year').map((v) => v.trim()).filter((v) => /^\d{4}$/.test(v)),
   };
 }
 
@@ -71,6 +73,17 @@ export default function BrowseView({ sources }: { sources: Source[] }) {
     }
     if (facets.theme.length) {
       result = result.filter((s) => s.themes.some((t) => facets.theme.includes(t)));
+    }
+    if (facets.year.length) {
+      const now = new Date().getFullYear();
+      result = result.filter((s) =>
+        facets.year.some((value) => {
+          const year = Number(value);
+          const start = parseInt(s.temporal.start.slice(0, 4), 10);
+          const end = s.temporal.ongoing ? now : parseInt(s.temporal.end.slice(0, 4), 10);
+          return year >= start && year <= (Number.isFinite(end) ? end : start);
+        })
+      );
     }
 
     if (searchIds) {
