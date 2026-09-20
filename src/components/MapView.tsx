@@ -5,6 +5,8 @@ import type { Map as MapLibreMap, MapGeoJSONFeature } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { Source, Subbasin } from '@/lib/types';
 import { DOMAIN_COLORS } from '@/lib/types';
+import { basemapStyle } from '@/lib/basemap';
+import { type BBox, bboxToRing, isGlobalScale } from '@/lib/spatial';
 import SourceCard from './SourceCard';
 
 // Approximate centroids used for sources that have a subbasin but no bbox.
@@ -16,40 +18,14 @@ const SUBBASIN_CENTROIDS: Record<Subbasin, [number, number]> = {
   farasan: [42.1, 16.7],
 };
 
-// A dataset whose bbox is much wider than the Red Sea basin itself (roughly
-// 11 x 17 degrees) is global/near-global in extent. Filling those as map
-// rectangles would blanket the whole map in one color and hide every
-// Red-Sea-scale footprint underneath it, so they're listed separately
-// instead of drawn.
-const GLOBAL_SCALE_DEGREES = 60;
-
-function bboxSpan([w, s, e, n]: [number, number, number, number]) {
-  return { width: e - w, height: n - s };
-}
-
-function isGlobalScale(bbox: [number, number, number, number]) {
-  const { width, height } = bboxSpan(bbox);
-  return width > GLOBAL_SCALE_DEGREES || height > GLOBAL_SCALE_DEGREES;
-}
-
-function bboxToPolygon([w, s, e, n]: [number, number, number, number]) {
-  return [
-    [w, s],
-    [e, s],
-    [e, n],
-    [w, n],
-    [w, s],
-  ];
-}
-
 export default function MapView({ sources }: { sources: Source[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const [selected, setSelected] = useState<Source | null>(null);
   const [pickerOptions, setPickerOptions] = useState<Source[] | null>(null);
 
-  const localSources = sources.filter((s) => s.spatial.bbox && !isGlobalScale(s.spatial.bbox));
-  const globalSources = sources.filter((s) => s.spatial.bbox && isGlobalScale(s.spatial.bbox));
+  const localSources = sources.filter((s) => s.spatial.bbox && !isGlobalScale(s.spatial.bbox as BBox));
+  const globalSources = sources.filter((s) => s.spatial.bbox && isGlobalScale(s.spatial.bbox as BBox));
   const pointSources = sources.filter((s) => !s.spatial.bbox && s.spatial.subbasins.length > 0);
 
   function pick(ids: string[]) {
@@ -75,17 +51,22 @@ export default function MapView({ sources }: { sources: Source[] }) {
 
       const map = new maplibregl.Map({
         container: containerRef.current,
-        style: 'https://demotiles.maplibre.org/style.json',
+        style: basemapStyle(),
         center: [38.5, 20.5],
         zoom: 4.2,
+        attributionControl: false,
+        dragRotate: false,
+        pitchWithRotate: false,
       });
       mapRef.current = map;
+      map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+      map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
 
       map.on('load', () => {
         const rectangleFeatures = localSources.map((s) => ({
           type: 'Feature' as const,
           properties: { id: s.id, color: DOMAIN_COLORS[s.domain[0]] },
-          geometry: { type: 'Polygon' as const, coordinates: [bboxToPolygon(s.spatial.bbox)] },
+          geometry: { type: 'Polygon' as const, coordinates: [bboxToRing(s.spatial.bbox as BBox)] },
         }));
 
         map.addSource('bboxes', {
@@ -96,13 +77,23 @@ export default function MapView({ sources }: { sources: Source[] }) {
           id: 'bbox-fill',
           type: 'fill',
           source: 'bboxes',
-          paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.25 },
+          paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.14 },
+        });
+        // White under the coloured edge: with 30-odd overlapping footprints it
+        // is the gap between outlines, not the outlines themselves, that lets
+        // the eye separate one dataset from the next.
+        map.addLayer({
+          id: 'bbox-halo',
+          type: 'line',
+          source: 'bboxes',
+          paint: { 'line-color': '#ffffff', 'line-width': 4, 'line-opacity': 0.75 },
         });
         map.addLayer({
           id: 'bbox-outline',
           type: 'line',
           source: 'bboxes',
-          paint: { 'line-color': ['get', 'color'], 'line-width': 1.5 },
+          paint: { 'line-color': ['get', 'color'], 'line-width': 2 },
+          layout: { 'line-join': 'round' },
         });
 
         map.on('click', 'bbox-fill', (e) => {
@@ -145,7 +136,7 @@ export default function MapView({ sources }: { sources: Source[] }) {
   return (
     <div>
       <div className="relative flex h-[70vh] gap-4">
-        <div ref={containerRef} className="h-full flex-1 rounded-lg border border-slate-200" />
+        <div ref={containerRef} className="h-full flex-1 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-sm" />
         {(selected || pickerOptions) && (
           <div className="w-80 shrink-0 overflow-y-auto">
             <button

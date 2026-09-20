@@ -67,10 +67,12 @@ export interface Access {
 
 export interface Provenance {
   originator: string;
-  license: string;
-  citation: string;
-  doi?: string;
-  source_url?: string;
+  // Null where cataloguing could not establish one — a real state of the
+  // inventory, not a placeholder to render blank.
+  license: string | null;
+  citation: string | null;
+  doi?: string | null;
+  source_url?: string | null;
   derived_from: string[]; // other source ids
 }
 

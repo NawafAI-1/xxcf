@@ -20,11 +20,11 @@ record's `quality.known_issues` field notes anything inferred or unverified
 during cataloging (e.g. uncounted rows in multi-GB files, unconfirmed
 licenses/DOIs) rather than guessing silently.
 
-Live site (upstream deployment):
-https://integrated-reef-fisheries-lab.github.io/red-sea-catalog/ — published from
-a different repository. This repository publishes its own copy at
-`https://<owner>.github.io/<repo>/` once GitHub Pages is enabled for it; see
-[Deployment](#deployment).
+Live site: https://nawafai-1.github.io/xxcf/ — published from this repository's
+`gh-pages` branch by the deploy workflow (see [Deployment](#deployment)).
+
+Upstream deployment, from the repository this one was forked from:
+https://integrated-reef-fisheries-lab.github.io/red-sea-catalog/
 
 ## Requirements
 
