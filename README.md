@@ -1,10 +1,17 @@
 # Red Sea Marine Data Catalog
 
-A static catalog of marine datasets covering the Red Sea basin — browse/search, a
-spatial footprint map, a coverage gap matrix, an interactive source network graph,
-and per-dataset detail pages. Built with Next.js (App Router, static export),
-Tailwind, MapLibre GL, d3-force, and browser-side semantic search via
-transformers.js. Deployed to GitHub Pages.
+A static catalog of marine datasets covering the Red Sea basin — an overview
+dashboard, browse/search, a spatial footprint map, a coverage gap matrix, an
+interactive source network graph, and per-dataset detail pages. Built with
+Next.js (App Router, static export), Tailwind, MapLibre GL, d3-force, and
+browser-side semantic search via transformers.js. Deployed to GitHub Pages.
+
+The landing page (`/`) is a stakeholder-facing overview: how much is catalogued,
+how much of it is analysis-ready and openly licensed, what it covers in space and
+time, how many subbasin x theme combinations are still empty, and what the
+cataloguing itself could not verify. Every figure on it is computed at build time
+from `data/sources/` by `src/lib/stats.ts` — nothing is hardcoded, so the page
+stays true as records are added or edited.
 
 The 43 datasets in `data/sources/` are a real inventory drawn from KAUST's Red
 Sea research data holdings (environmental, ecological, production,
@@ -108,15 +115,43 @@ Notes on the admin UI:
 ```
 data/sources/          One JSON file per dataset — the canonical "database"
 public/search-index.json   Generated at build time, never hand-edit
-src/app/                Pages: / (browse+search), /map, /coverage, /sources/[id]
-src/components/         SearchBar, SourceCard, FacetPanel, CoverageMatrix, MapView, ...
+src/app/                Pages: / (overview), /browse, /map, /coverage, /network, /sources/[id]
+src/components/         SearchBar, SourceCard, FacetPanel, CoverageMatrix, MapView, StatTile, BarList, ...
 src/lib/types.ts        Canonical TypeScript types mirroring the source schema
 src/lib/sources.ts      Build-time (fs-based) loading of data/sources/*.json
+src/lib/stats.ts        Build-time aggregation behind the overview page's figures
+src/lib/coverage.ts     The tracked domain x theme columns + best-quality-per-cell lookup
 src/lib/search.ts       Browser-side semantic search (lazy model load + cosine similarity)
 scripts/build-search-index.mjs   Prebuild step that generates public/search-index.json
 scripts/admin-server.mjs         Local-only admin server (see above)
 admin/                  Static HTML/CSS/JS for the admin UI (served by admin-server.mjs)
 ```
+
+## Deep links into the browse page
+
+`/browse` reads facet selections from the query string, so the overview page (and
+anything else) can link straight into a filtered view:
+
+```
+/browse?domain=ecological
+/browse?access=public&quality=analysis-ready
+/browse?subbasin=farasan,southern
+```
+
+Valid values are the union members in [`src/lib/types.ts`](src/lib/types.ts)
+(`domain`, `subbasin`, `access`, `quality`); anything else is ignored. Parameters
+may be repeated or comma-separated. They are applied after mount rather than
+during render — the exported HTML is prerendered without a query string, so
+seeding React state from the URL on the server would produce a hydration
+mismatch.
+
+## Tracking a new coverage column
+
+The coverage matrix's columns live in
+[`src/lib/coverage.ts`](src/lib/coverage.ts) (`COVERAGE_COLUMNS`). Add an entry
+there and both the matrix and the overview page's coverage figure pick it up —
+they share the same definition so they can't drift apart. A column's `theme` must
+match the string used in the records' `themes` array exactly.
 
 ## Adding a new dataset
 

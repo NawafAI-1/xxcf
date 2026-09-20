@@ -22,7 +22,7 @@ export default function SourceCard({ source }: { source: Source }) {
   return (
     <Link
       href={`/sources/${source.id}`}
-      className="block rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md"
+      className="flex h-full flex-col rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
     >
       <div className="mb-2 flex flex-wrap items-center gap-2">
         {source.domain.map((d) => (
@@ -40,7 +40,7 @@ export default function SourceCard({ source }: { source: Source }) {
       </div>
       <h3 className="text-base font-semibold text-slate-900">{source.title}</h3>
       <p className="mt-1 line-clamp-2 text-sm text-slate-600">{source.abstract}</p>
-      <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-500">
+      <div className="mt-auto flex flex-wrap gap-3 pt-3 text-xs text-slate-500">
         <span>
           bbox [{w}, {s}, {e}, {n}]
         </span>
