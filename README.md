@@ -20,7 +20,11 @@ record's `quality.known_issues` field notes anything inferred or unverified
 during cataloging (e.g. uncounted rows in multi-GB files, unconfirmed
 licenses/DOIs) rather than guessing silently.
 
-Live site: https://integrated-reef-fisheries-lab.github.io/red-sea-catalog/
+Live site (upstream deployment):
+https://integrated-reef-fisheries-lab.github.io/red-sea-catalog/ — published from
+a different repository. This repository publishes its own copy at
+`https://<owner>.github.io/<repo>/` once GitHub Pages is enabled for it; see
+[Deployment](#deployment).
 
 ## Requirements
 
@@ -69,8 +73,33 @@ webpack-specific option.
 
 Pushing to `main` triggers `.github/workflows/deploy.yml`, which runs
 `npm ci && npm run build` and publishes `out/` to the `gh-pages` branch via
-`peaceiris/actions-gh-pages`. GitHub Pages is configured (Settings → Pages)
-to serve from that branch. No manual deploy steps needed beyond pushing.
+`peaceiris/actions-gh-pages`. The workflow can also be run by hand
+(Actions → Deploy to GitHub Pages → Run workflow) against any branch, which is
+useful for previewing a branch before merging it. No manual deploy steps are
+needed beyond pushing.
+
+### One-time setup for a repository that has never published
+
+1. Run the workflow once (push to `main`, or dispatch it manually). It creates
+   the `gh-pages` branch.
+2. Settings → Pages → Source: *Deploy from a branch* → `gh-pages` / `/ (root)`.
+
+The site then serves at `https://<owner>.github.io/<repo>/`.
+
+### Base path
+
+A GitHub Pages project site lives under `/<repo>/`, not at the domain root, so
+every asset URL needs that prefix. `next.config.js` derives it from
+`GITHUB_REPOSITORY` at build time — nothing to edit when the repository is
+renamed or forked, and local `next dev`/`next build` still serve from `/`.
+
+Two cases need an override, set as `PAGES_BASE_PATH` in the workflow's `env`:
+
+- A user/org site (`<owner>.github.io`) or a custom domain serves from the root:
+  set `PAGES_BASE_PATH: ''`. (An `<owner>.github.io` repository name is already
+  detected and needs no override.)
+- Serving under a different path than the repository name: set it explicitly,
+  e.g. `PAGES_BASE_PATH: '/catalog'`.
 
 ## Admin tool (editing the dataset)
 
