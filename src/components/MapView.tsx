@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { Map as MapLibreMap, MapGeoJSONFeature } from 'maplibre-gl';
+import type { Map as MapLibreMap, MapGeoJSONFeature, RasterTileSource } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { Source, Subbasin } from '@/lib/types';
 import { DOMAIN_COLORS } from '@/lib/types';
@@ -14,6 +14,16 @@ import {
   withBasemap,
 } from '@/lib/basemap';
 import { type BBox, isGlobalScale } from '@/lib/spatial';
+import {
+  SCIENCE_LAYERS,
+  SLIDER_DAYS,
+  type ScienceLayer,
+  dateFromSlider,
+  defaultDate,
+  legendUrl,
+  sliderFromDate,
+  tileUrl,
+} from '@/lib/gibs';
 import SourceCard from './SourceCard';
 
 // Approximate centroids for sources that have a subbasin but no bbox.
@@ -78,6 +88,17 @@ export default function MapView({ sources }: { sources: Source[] }) {
   const [pickerOptions, setPickerOptions] = useState<Source[] | null>(null);
   const [hint, setHint] = useState<string | null>(null);
   const [away, setAway] = useState(false);
+  const [science, setScience] = useState<ScienceLayer | null>(null);
+  const [date, setDate] = useState(defaultDate());
+  const [playing, setPlaying] = useState(false);
+  const [scienceFailed, setScienceFailed] = useState(false);
+  // Read inside the map's own callbacks, which are created once and would
+  // otherwise close over the state as it was when the map was built.
+  const scienceRef = useRef<{ layer: ScienceLayer | null; date: string }>({ layer: null, date });
+  /** Layer/date combinations already found to have no imagery. */
+  const failedRef = useRef<Set<string>>(new Set());
+  /** The combination the most recent probe was for, so a stale one cannot win. */
+  const probeRef = useRef<string | null>(null);
   // The place a first click flew to. A second click on it opens its datasets.
   const armedRef = useRef<string | null>(null);
 
@@ -97,6 +118,89 @@ export default function MapView({ sources }: { sources: Source[] }) {
     } else {
       setPickerOptions(matches);
       setSelected(null);
+    }
+  }
+
+  useEffect(() => {
+    scienceRef.current = { layer: science, date };
+  }, [science, date]);
+
+  /**
+   * The measurement layer is a raster source under the points: added, retiled
+   * or removed as the choice changes, and re-added from scratch whenever the
+   * basemap style swaps underneath it.
+   *
+   * It probes one tile before adding anything. MapLibre renders raster tiles by
+   * binding their texture, and a tile that failed to load has none, which
+   * throws inside the render loop and takes the map down with it. Satellite
+   * products have real gaps - a date with no pass over this longitude returns
+   * nothing - so this is a state to expect, not an edge case. Probing first
+   * means a missing date shows a message instead of a broken map.
+   */
+  async function applyScience(map: MapLibreMap) {
+    const { layer, date: on } = scienceRef.current;
+
+    const remove = () => {
+      if (map.getLayer('science')) map.removeLayer('science');
+      if (map.getSource('science')) map.removeSource('science');
+    };
+
+    if (!layer) {
+      remove();
+      return;
+    }
+
+    const token = `${layer.key}:${on}`;
+    probeRef.current = token;
+
+    if (failedRef.current.has(token)) {
+      remove();
+      return;
+    }
+
+    const url = tileUrl(layer, on).replace('{z}', '2').replace('{y}', '1').replace('{x}', '2');
+    let reachable = false;
+    try {
+      const response = await fetch(url, { method: 'GET', cache: 'force-cache' });
+      reachable = response.ok;
+    } catch {
+      reachable = false;
+    }
+
+    // The choice moved on while the probe was in flight; that call owns it now.
+    if (probeRef.current !== token) return;
+
+    if (!reachable) {
+      failedRef.current.add(token);
+      setScienceFailed(true);
+      remove();
+      return;
+    }
+
+    if (!map.getSource('science')) {
+      map.addSource('science', {
+        type: 'raster',
+        tiles: [tileUrl(layer, on)],
+        tileSize: 256,
+        maxzoom: layer.maxzoom,
+        attribution:
+          '<a href="https://worldview.earthdata.nasa.gov/" target="_blank" rel="noreferrer">NASA EOSDIS GIBS</a>',
+      });
+    } else {
+      (map.getSource('science') as RasterTileSource).setTiles([tileUrl(layer, on)]);
+    }
+
+    if (!map.getLayer('science')) {
+      // Under the points: the measurement is context for them, not a cover.
+      map.addLayer(
+        {
+          id: 'science',
+          type: 'raster',
+          source: 'science',
+          paint: { 'raster-opacity': 0.85 },
+        },
+        map.getLayer('place-ring') ? 'place-ring' : undefined
+      );
     }
   }
 
@@ -204,7 +308,21 @@ export default function MapView({ sources }: { sources: Source[] }) {
 
         map.on('mouseenter', 'place', () => (map.getCanvas().style.cursor = 'pointer'));
         map.on('mouseleave', 'place', () => (map.getCanvas().style.cursor = ''));
+
+        void applyScience(map);
       };
+
+      // A measurement layer with no data for the chosen date returns errors
+      // rather than empty tiles, so say so instead of showing bare ocean.
+      map.on('error', (event) => {
+        if ((event as { sourceId?: string }).sourceId !== 'science' || cancelled) return;
+        // Pull the layer immediately: a raster tile that errored has no texture,
+        // and the next frame that tries to bind it would throw.
+        if (map.getLayer('science')) map.removeLayer('science');
+        if (map.getSource('science')) map.removeSource('science');
+        if (probeRef.current) failedRef.current.add(probeRef.current);
+        setScienceFailed(true);
+      });
 
       cleanupBasemap = withBasemap(map, {
         addOverlays,
@@ -228,6 +346,30 @@ export default function MapView({ sources }: { sources: Source[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sources]);
 
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+    setScienceFailed(false);
+    void applyScience(map);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [science, date]);
+
+  // Playback walks the slider forward a day at a time and stops at today.
+  useEffect(() => {
+    if (!playing || !science) return;
+    const timer = setInterval(() => {
+      setDate((current) => {
+        const next = sliderFromDate(current) + 1;
+        if (next > SLIDER_DAYS) {
+          setPlaying(false);
+          return current;
+        }
+        return dateFromSlider(next);
+      });
+    }, 900);
+    return () => clearInterval(timer);
+  }, [playing, science]);
+
   return (
     <div>
       <div className="relative flex h-[70vh] gap-4">
@@ -237,8 +379,95 @@ export default function MapView({ sources }: { sources: Source[] }) {
           style={{ backgroundColor: SPACE_COLOR }}
         />
 
+        {/* The measurement panel: what is painted on the ocean, and when. */}
+        <div className="absolute left-4 top-4 w-72 rounded-xl bg-white/95 p-3 shadow-sm ring-1 ring-slate-200 backdrop-blur">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Show the measurement
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1">
+            <button
+              onClick={() => {
+                setScience(null);
+                setPlaying(false);
+              }}
+              className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
+                science ? 'text-slate-600 hover:bg-slate-100' : 'bg-slate-900 text-white'
+              }`}
+            >
+              None
+            </button>
+            {SCIENCE_LAYERS.map((layer) => (
+              <button
+                key={layer.key}
+                onClick={() => {
+                  setScience(layer);
+                  setScienceFailed(false);
+                }}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
+                  science?.key === layer.key
+                    ? 'bg-slate-900 text-white'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                {layer.label}
+              </button>
+            ))}
+          </div>
+
+          {science ? (
+            <div className="mt-3 space-y-2">
+              <p className="text-xs leading-relaxed text-slate-600">{science.blurb}</p>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setPlaying((p) => !p)}
+                  className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-700 transition hover:border-slate-400"
+                >
+                  {playing ? 'Pause' : 'Play year'}
+                </button>
+                <span className="font-mono text-xs tabular-nums text-slate-700">{date}</span>
+              </div>
+
+              <input
+                type="range"
+                min={0}
+                max={SLIDER_DAYS}
+                value={sliderFromDate(date)}
+                onChange={(e) => {
+                  setPlaying(false);
+                  setDate(dateFromSlider(Number(e.target.value)));
+                }}
+                className="w-full accent-teal-700"
+                aria-label="Date"
+              />
+
+              {/* GIBS publishes the scale for each layer, so it is theirs rather
+                  than a guess of mine. */}
+              <img
+                src={legendUrl(science)}
+                alt={`${science.label} scale in ${science.unit}`}
+                className="h-8 w-full object-contain"
+              />
+
+              {scienceFailed ? (
+                <p className="rounded-md bg-amber-50 px-2 py-1.5 text-xs text-amber-800">
+                  No imagery for this date. Try another day: satellite products have gaps and a
+                  processing lag.
+                </p>
+              ) : null}
+
+              <a
+                href={`/sources/${science.catalogId}`}
+                className="inline-block text-xs font-medium text-teal-700 hover:text-teal-800"
+              >
+                The catalogue&rsquo;s record for this product &rarr;
+              </a>
+            </div>
+          ) : null}
+        </div>
+
         {hint ? (
-          <div className="pointer-events-none absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm ring-1 ring-slate-200">
+          <div className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 rounded-full bg-white/95 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm ring-1 ring-slate-200">
             {hint}
           </div>
         ) : null}
