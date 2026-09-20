@@ -5,7 +5,7 @@ import PageHeader from '@/components/PageHeader';
 import { sectionAccent } from '@/lib/sections';
 
 export const metadata = {
-  title: 'Spatial footprints — Red Sea Marine Data Catalog',
+  title: 'Spatial footprints | Red Sea Marine Data Catalog',
   description: 'The bounding box of every catalogued Red Sea dataset, drawn on one map.',
 };
 

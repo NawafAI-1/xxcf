@@ -21,7 +21,7 @@ export default function CoverageMatrix({ sources }: { sources: Source[] }) {
               aria-hidden
             />
             <span className="font-medium text-slate-700">{item.label}</span>
-            <span className="text-slate-500">— {item.note}</span>
+            <span className="text-slate-500">({item.note})</span>
           </li>
         ))}
       </ul>
@@ -62,10 +62,10 @@ export default function CoverageMatrix({ sources }: { sources: Source[] }) {
                       <div
                         title={
                           status
-                            ? `${col.label} — ${subbasin.replace(/-/g, ' ')}: ${count} dataset${
+                            ? `${col.label}, ${subbasin.replace(/-/g, ' ')}: ${count} dataset${
                                 count === 1 ? '' : 's'
                               }, best available is ${status.replace('-', ' ')}`
-                            : `${col.label} — ${subbasin.replace(/-/g, ' ')}: no catalogued dataset`
+                            : `${col.label}, ${subbasin.replace(/-/g, ' ')}: no catalogued dataset`
                         }
                         className={`flex h-12 w-full flex-col items-center justify-center rounded-md text-xs font-medium transition hover:brightness-110 ${
                           status ? 'text-white' : 'border border-dashed border-slate-300 text-slate-400'

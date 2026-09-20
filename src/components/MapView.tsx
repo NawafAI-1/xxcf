@@ -156,7 +156,7 @@ export default function MapView({ sources }: { sources: Source[] }) {
             {pickerOptions && (
               <div className="rounded-lg border border-slate-200 bg-white p-3">
                 <p className="mb-2 text-xs font-medium text-slate-600">
-                  {pickerOptions.length} datasets overlap here — pick one:
+                  {pickerOptions.length} datasets overlap here. Pick one:
                 </p>
                 <ul className="space-y-1">
                   {pickerOptions.map((s) => (
@@ -187,7 +187,7 @@ export default function MapView({ sources }: { sources: Source[] }) {
         <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
           <p className="mb-2 text-sm font-medium text-slate-700">
             {globalSources.length} global / very large-extent dataset{globalSources.length === 1 ? '' : 's'} (not
-            drawn on the map — their footprint would cover the whole basin and hide everything else)
+            drawn on the map, because their footprint would cover the whole basin and hide everything else)
           </p>
           <ul className="grid grid-cols-1 gap-1 sm:grid-cols-2">
             {globalSources.map((s) => (

@@ -5,7 +5,7 @@ import PageHeader from '@/components/PageHeader';
 import { sectionAccent } from '@/lib/sections';
 
 export const metadata = {
-  title: 'Browse datasets — Red Sea Marine Data Catalog',
+  title: 'Browse datasets | Red Sea Marine Data Catalog',
   description: 'Search and filter the Red Sea marine dataset inventory by domain, subbasin, access tier and processing state.',
 };
 

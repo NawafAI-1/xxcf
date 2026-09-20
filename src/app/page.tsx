@@ -45,7 +45,7 @@ const EXPLORE = [
   {
     href: '/coverage',
     title: 'Coverage gaps',
-    body: 'Subbasin by theme, colored by the best data available — the grey cells are the open questions.',
+    body: 'Subbasin by theme, colored by the best data available. The grey cells are the open questions.',
   },
   {
     href: '/network',
@@ -109,7 +109,7 @@ export default function HomePage() {
         </h1>
         <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-200 sm:text-base">
           One inventory across environment, reef ecology, fisheries production, nutrition and
-          socio-economics — {stats.earliestYear} to today, with every variable, steward, licence and
+          socio-economics, covering {stats.earliestYear} to today, with every variable, steward, licence and
           known limitation written down. Find what exists, see what does not, and know what it will
           take to use it before you commit a project to it.
         </p>
@@ -156,7 +156,7 @@ export default function HomePage() {
         <StatTile
           label="Ready to analyse now"
           value={`${stats.analysisReady}`}
-          hint={`${stats.qualityCounts.find((q) => q.key === 'raw')?.count ?? 0} still raw — cleaning is the bottleneck`}
+          hint={`${stats.qualityCounts.find((q) => q.key === 'raw')?.count ?? 0} still raw; cleaning is the bottleneck`}
           href="/browse?quality=analysis-ready"
           accent="#047857"
         />
@@ -186,7 +186,7 @@ export default function HomePage() {
 
         <Section
           title="How usable it is today"
-          description="Processing state and access tier — the two questions that decide whether a dataset helps this quarter or next year."
+          description="Processing state and access tier: the two questions that decide whether a dataset helps this quarter or next year."
           action={{ href: '/browse', label: 'Filter' }}
         >
           <BarList items={readinessItems} />
@@ -260,7 +260,7 @@ export default function HomePage() {
           <p className="mt-4 text-sm leading-relaxed text-slate-600">
             Every record carries a <span className="font-medium text-slate-800">known issues</span>{' '}
             field. Where a row count, licence or DOI could not be confirmed during cataloguing, it
-            says so instead of guessing — so a plan built on this catalog can budget for the
+            says so instead of guessing, so a plan built on this catalog can budget for the
             verification it still needs.
           </p>
         </Section>
