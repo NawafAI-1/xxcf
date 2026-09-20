@@ -5,7 +5,13 @@ import type { Map as MapLibreMap, MapGeoJSONFeature } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { Source, Subbasin } from '@/lib/types';
 import { DOMAIN_COLORS } from '@/lib/types';
-import { BASEMAP_STYLE_URL, withBasemap } from '@/lib/basemap';
+import {
+  DEMOTILES_STYLE_URL,
+  SPACE_COLOR,
+  blueMarbleStyle,
+  esriImageryStyle,
+  withBasemap,
+} from '@/lib/basemap';
 import { type BBox, bboxToRing, isGlobalScale } from '@/lib/spatial';
 import SourceCard from './SourceCard';
 
@@ -52,7 +58,7 @@ export default function MapView({ sources }: { sources: Source[] }) {
 
       const map = new maplibregl.Map({
         container: containerRef.current,
-        style: BASEMAP_STYLE_URL,
+        style: blueMarbleStyle(),
         center: [38.5, 20.5],
         zoom: 2.4,
         attributionControl: false,
@@ -95,7 +101,7 @@ export default function MapView({ sources }: { sources: Source[] }) {
           id: 'bbox-fill',
           type: 'fill',
           source: 'bboxes',
-          paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.14 },
+          paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.22 },
         });
         // White under the coloured edge: with 30-odd overlapping footprints it
         // is the gap between outlines, not the outlines themselves, that lets
@@ -104,7 +110,7 @@ export default function MapView({ sources }: { sources: Source[] }) {
           id: 'bbox-halo',
           type: 'line',
           source: 'bboxes',
-          paint: { 'line-color': '#ffffff', 'line-width': 4, 'line-opacity': 0.75 },
+          paint: { 'line-color': '#ffffff', 'line-width': 4, 'line-opacity': 0.85 },
         });
         map.addLayer({
           id: 'bbox-outline',
@@ -179,7 +185,12 @@ export default function MapView({ sources }: { sources: Source[] }) {
         }
       };
 
-      cleanupBasemap = withBasemap(map, { addOverlays });
+      cleanupBasemap = withBasemap(map, {
+        addOverlays,
+        // Deeper imagery first, then the vector demo style: whatever is
+        // reachable, the planet keeps its footprints.
+        fallbacks: [esriImageryStyle(), DEMOTILES_STYLE_URL],
+      });
     })();
 
     return () => {
@@ -193,7 +204,8 @@ export default function MapView({ sources }: { sources: Source[] }) {
   return (
     <div>
       <div className="relative flex h-[70vh] gap-4">
-        <div ref={containerRef} className="h-full flex-1 overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-b from-slate-200 to-sea-surface shadow-sm" />
+        <div ref={containerRef} className="h-full flex-1 overflow-hidden rounded-xl border border-slate-800 shadow-sm"
+          style={{ backgroundColor: SPACE_COLOR }} />
         {(selected || pickerOptions) && (
           <div className="w-80 shrink-0 overflow-y-auto">
             <button
