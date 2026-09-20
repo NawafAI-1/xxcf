@@ -13,7 +13,7 @@ record's `quality.known_issues` field notes anything inferred or unverified
 during cataloging (e.g. uncounted rows in multi-GB files, unconfirmed
 licenses/DOIs) rather than guessing silently.
 
-Live site: https://integrated-reef-fisheries-lab.github.io/red-sea-catalog/
+Live site: https://nawafai-1.github.io/xxcf/
 
 ## Requirements
 
