@@ -52,25 +52,38 @@ const TILE_TIMEOUT_MS = 8000;
 
 
 /**
- * NASA's Blue Marble (shaded relief with bathymetry), served by GIBS: public
- * domain, no key, and the view of Earth people picture when they picture Earth.
- * It stops at 500 m (zoom 8), so the source caps there and MapLibre over-zooms
- * the last level rather than requesting tiles that do not exist.
+ * NASA's true-colour imagery from GIBS: yesterday's MODIS Terra pass, which is
+ * the planet as it actually looked, weather and all. Public domain, no key.
+ * Yesterday rather than today because the current day's mosaic is still being
+ * assembled and has gaps.
+ */
+export function trueColorStyle(): StyleSpecification {
+  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return imageryStyle(
+    `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${yesterday}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`,
+    9,
+    'Imagery: <a href="https://worldview.earthdata.nasa.gov/" target="_blank" rel="noreferrer">NASA EOSDIS GIBS</a>, MODIS Terra true colour'
+  );
+}
+
+/**
+ * Blue Marble: shaded relief with bathymetry, cloudless and always available.
+ * The backstop for the day a true-colour mosaic is missing.
  */
 export function blueMarbleStyle(): StyleSpecification {
+  return imageryStyle(
+    'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg',
+    8,
+    'Imagery: <a href="https://worldview.earthdata.nasa.gov/" target="_blank" rel="noreferrer">NASA EOSDIS GIBS</a>, Blue Marble'
+  );
+}
+
+/** Shared shape of the imagery styles: one raster source, space behind it. */
+function imageryStyle(tiles: string, maxzoom: number, attribution: string): StyleSpecification {
   return {
     version: 8,
     sources: {
-      imagery: {
-        type: 'raster',
-        tiles: [
-          'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg',
-        ],
-        tileSize: 256,
-        maxzoom: 8,
-        attribution:
-          'Imagery: <a href="https://worldview.earthdata.nasa.gov/" target="_blank" rel="noreferrer">NASA EOSDIS GIBS</a>, Blue Marble',
-      },
+      imagery: { type: 'raster', tiles: [tiles], tileSize: 256, maxzoom, attribution },
     },
     layers: [
       { id: 'space', type: 'background', paint: { 'background-color': SPACE_COLOR } },
@@ -88,25 +101,13 @@ export function blueMarbleStyle(): StyleSpecification {
   };
 }
 
-/** Deeper imagery for when someone zooms past what Blue Marble carries. */
+/** Deeper imagery for when someone zooms past what NASA's mosaics carry. */
 export function esriImageryStyle(): StyleSpecification {
-  return {
-    version: 8,
-    sources: {
-      imagery: {
-        type: 'raster',
-        tiles: [
-          'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        ],
-        tileSize: 256,
-        attribution: 'Imagery: Esri, Maxar, Earthstar Geographics',
-      },
-    },
-    layers: [
-      { id: 'space', type: 'background', paint: { 'background-color': SPACE_COLOR } },
-      { id: 'imagery', type: 'raster', source: 'imagery' },
-    ],
-  };
+  return imageryStyle(
+    'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    19,
+    'Imagery: Esri, Maxar, Earthstar Geographics'
+  );
 }
 
 /** The colour of space behind the planet, and of a sphere with no tiles yet. */
