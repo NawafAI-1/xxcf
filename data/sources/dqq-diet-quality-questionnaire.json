@@ -1,6 +1,6 @@
 {
   "id": "dqq-diet-quality-questionnaire",
-  "title": "Global Dietary Quality Questionnaire (DQQ) Results — Saudi Arabia",
+  "title": "Global Dietary Quality Questionnaire (DQQ) Results: Saudi Arabia",
   "abstract": "Standardized Dietary Quality Questionnaire results providing diet quality indicators (e.g. Minimum Dietary Diversity for Women, food group consumption) disaggregated by income group, region, and demographic subgroup, for 2021-2024.",
   "domain": [
     "nutrition-health"
@@ -109,7 +109,7 @@
   "quality": {
     "status": "analysis-ready",
     "known_issues": [
-      "Dataset is a global compilation covering all countries — has not yet been filtered to the Saudi Arabia rows specifically for this catalog entry."
+      "Dataset is a global compilation covering all countries; has not yet been filtered to the Saudi Arabia rows specifically for this catalog entry."
     ],
     "last_verified": "2026-04-22"
   },

@@ -1,6 +1,6 @@
 {
   "id": "datasaudi-demographic-housing-indicators",
-  "title": "Data Saudi — Provincial Demographic and Housing Indicators",
+  "title": "Data Saudi: Provincial Demographic and Housing Indicators",
   "abstract": "Province-level demographic and housing indicators for Saudi Arabia sourced from the Data Saudi open data portal (GASTAT-derived), covering household size, housing type, dwelling counts, population density, and population growth by province and year.",
   "domain": [
     "socio-economic"

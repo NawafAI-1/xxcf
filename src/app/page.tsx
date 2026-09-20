@@ -129,7 +129,7 @@ export default function HomePage() {
         </div>
         <dl className="mt-9 grid grid-cols-2 gap-x-6 gap-y-5 border-t border-white/15 pt-6 sm:grid-cols-4">
           {[
-            { label: 'Years of record', value: `${stats.latestYear - stats.earliestYear + 1}`, hint: `${stats.earliestYear}–present` },
+            { label: 'Years of record', value: `${stats.latestYear - stats.earliestYear + 1}`, hint: `${stats.earliestYear} to present` },
             { label: 'Originating institutions', value: `${stats.originators}`, hint: `${stats.stewards} named stewards` },
             { label: 'Documented variables', value: `${stats.variables}`, hint: `across ${stats.resources} files` },
             { label: 'Still being updated', value: `${stats.ongoing}`, hint: 'ongoing collections' },

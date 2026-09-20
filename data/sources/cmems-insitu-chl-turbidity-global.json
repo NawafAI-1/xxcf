@@ -82,8 +82,8 @@
   "quality": {
     "status": "raw",
     "known_issues": [
-      "Global, not filtered to Red Sea — needs spatial subsetting to identify observations relevant to the basin.",
-      "Very large single file (16.4 GB) — likely needs chunked/streamed processing rather than a full in-memory load."
+      "Global, not filtered to Red Sea; needs spatial subsetting to identify observations relevant to the basin.",
+      "Very large single file (16.4 GB); likely needs chunked/streamed processing rather than a full in-memory load."
     ],
     "last_verified": "2026-04-22"
   },

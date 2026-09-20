@@ -84,7 +84,7 @@
           "label": "Total Gravity",
           "type": "float",
           "unit": "gravity index",
-          "description": "Combined gravity metric (population and market access weighted by travel time) — a standard predictor of reef fishing pressure.",
+          "description": "Combined gravity metric (population and market access weighted by travel time), a standard predictor of reef fishing pressure.",
           "missing_values": [
             "NA"
           ],
@@ -110,11 +110,11 @@
       "name": "KAUST research team",
       "email": ""
     },
-    "how_to_request": "Internal mirror of a global reef survey compilation (methodology consistent with Cinner et al.-style reef fish gravity studies) — confirm original source/license with the team before external sharing."
+    "how_to_request": "Internal mirror of a global reef survey compilation (methodology consistent with Cinner et al.-style reef fish gravity studies); confirm original source/license with the team before external sharing."
   },
   "provenance": {
     "originator": "Global reef survey compilation (multiple contributing providers per-site; original source not fully documented in this copy)",
-    "license": "Unconfirmed — do not redistribute without verifying terms",
+    "license": "Unconfirmed; do not redistribute without verifying terms",
     "citation": "",
     "doi": null,
     "source_url": null,
@@ -123,8 +123,8 @@
   "quality": {
     "status": "raw",
     "known_issues": [
-      "Original citation/source paper not confirmed from the file itself — column structure (Grav_tot, MGMT_type, TT_market_h) strongly resembles published reef-fish-biomass gravity studies but the exact source/DOI needs verification before citing externally.",
-      "Global coverage — needs filtering to identify any Red Sea sites specifically."
+      "Original citation/source paper not confirmed from the file itself; column structure (Grav_tot, MGMT_type, TT_market_h) strongly resembles published reef-fish-biomass gravity studies but the exact source/DOI needs verification before citing externally.",
+      "Global coverage; needs filtering to identify any Red Sea sites specifically."
     ],
     "last_verified": "2026-04-22"
   },

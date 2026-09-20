@@ -1,6 +1,6 @@
 {
   "id": "who-nha-indicators-saudi-arabia",
-  "title": "National Health Accounts (NHA) Indicators — Saudi Arabia",
+  "title": "National Health Accounts (NHA) Indicators: Saudi Arabia",
   "abstract": "Health financing and expenditure indicators for Saudi Arabia (e.g. Current Health Expenditure as % of GDP, per-capita health expenditure, expenditure by financing scheme, health care function, and provider type), reported annually from 2000 onward, following the WHO/OECD/Eurostat System of Health Accounts framework.",
   "domain": [
     "nutrition-health"
@@ -82,7 +82,7 @@
     "how_to_request": "Publicly available from the WHO Global Health Expenditure Database (apps.who.int/nha/database); no request required."
   },
   "provenance": {
-    "originator": "World Health Organization (WHO) Global Health Expenditure Database, National Health Accounts — Saudi Arabia extract",
+    "originator": "World Health Organization (WHO) Global Health Expenditure Database, National Health Accounts: Saudi Arabia extract",
     "license": "WHO open data terms",
     "citation": "World Health Organization. Global Health Expenditure Database. Geneva: WHO.",
     "doi": null,

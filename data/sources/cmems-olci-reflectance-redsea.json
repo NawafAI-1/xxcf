@@ -1,6 +1,6 @@
 {
   "id": "cmems-olci-reflectance-redsea",
-  "title": "Sentinel-3 OLCI Water-Leaving Reflectance — Red Sea (4 km, Daily)",
+  "title": "Sentinel-3 OLCI Water-Leaving Reflectance: Red Sea (4 km, Daily)",
   "abstract": "Daily multi-band water-leaving reflectance and derived ocean color variables from Sentinel-3 OLCI at 4 km resolution, clipped to the Red Sea extent, distributed via Copernicus Marine Service.",
   "domain": [
     "environmental"

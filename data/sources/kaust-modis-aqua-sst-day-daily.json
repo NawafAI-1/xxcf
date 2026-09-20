@@ -1,6 +1,6 @@
 {
   "id": "kaust-modis-aqua-sst-day-daily",
-  "title": "AQUA/MODIS Sea Surface Temperature (Daytime, 11 micron) Daily L3m — Red Sea",
+  "title": "AQUA/MODIS Sea Surface Temperature (Daytime, 11 micron) Daily L3m: Red Sea",
   "abstract": "Daily NASA AQUA/MODIS Level-3 mapped (L3m) daytime sea surface temperature granules (11-micron longwave-infrared retrieval, standard SST product) covering the Red Sea, archived as a directory of daily NetCDF granules, a tar bundle of the same granules, and a single time-merged 'combined' NetCDF file.",
   "domain": [
     "environmental"

@@ -86,7 +86,7 @@
   "quality": {
     "status": "raw",
     "known_issues": [
-      "File naming (sau_pd_{year}_1km.tif) and directory context strongly match WorldPop's population density product, but the exact WorldPop sub-product (constrained vs. unconstrained, UN-adjusted vs. not) could not be confirmed from the files alone — original download provenance/README not present in the folder.",
+      "File naming (sau_pd_{year}_1km.tif) and directory context strongly match WorldPop's population density product, but the exact WorldPop sub-product (constrained vs. unconstrained, UN-adjusted vs. not) could not be confirmed from the files alone; original download provenance/README not present in the folder.",
       "Coverage is all of Saudi Arabia, not clipped to Red Sea coastal governorates; no Red-Sea-specific subsetting has been performed.",
       "No data for 2021-2024 (Rmd registry entry marks WorldPop as [Previous]/already acquired, but the local archive stops at 2020).",
       "Exact citation DOI not confirmed for this specific product/vintage, so left null rather than guessed."

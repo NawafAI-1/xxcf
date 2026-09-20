@@ -14,13 +14,13 @@ export interface CoverageColumn {
 
 // Add a column whenever a new domain/theme combination should be tracked.
 export const COVERAGE_COLUMNS: CoverageColumn[] = [
-  { key: 'env-sst', label: 'Environmental — SST', shortLabel: 'SST', domain: 'environmental', theme: 'SST' },
-  { key: 'env-chl', label: 'Environmental — Chlorophyll', shortLabel: 'Chlorophyll', domain: 'environmental', theme: 'chlorophyll-a' },
-  { key: 'eco-coral', label: 'Ecological — Coral Cover', shortLabel: 'Coral cover', domain: 'ecological', theme: 'coral cover' },
-  { key: 'eco-fish', label: 'Ecological — Reef Fish', shortLabel: 'Reef fish', domain: 'ecological', theme: 'reef fish' },
-  { key: 'prod-catch', label: 'Production — Fisheries Catch', shortLabel: 'Fisheries catch', domain: 'production', theme: 'fisheries catch reconstruction' },
-  { key: 'nutri-consumption', label: 'Nutrition — Seafood Consumption', shortLabel: 'Seafood consumption', domain: 'nutrition-health', theme: 'seafood consumption' },
-  { key: 'socio-pop', label: 'Socio-economic — Population Density', shortLabel: 'Population density', domain: 'socio-economic', theme: 'population density' },
+  { key: 'env-sst', label: 'Environmental: SST', shortLabel: 'SST', domain: 'environmental', theme: 'SST' },
+  { key: 'env-chl', label: 'Environmental: Chlorophyll', shortLabel: 'Chlorophyll', domain: 'environmental', theme: 'chlorophyll-a' },
+  { key: 'eco-coral', label: 'Ecological: Coral Cover', shortLabel: 'Coral cover', domain: 'ecological', theme: 'coral cover' },
+  { key: 'eco-fish', label: 'Ecological: Reef Fish', shortLabel: 'Reef fish', domain: 'ecological', theme: 'reef fish' },
+  { key: 'prod-catch', label: 'Production: Fisheries Catch', shortLabel: 'Fisheries catch', domain: 'production', theme: 'fisheries catch reconstruction' },
+  { key: 'nutri-consumption', label: 'Nutrition: Seafood Consumption', shortLabel: 'Seafood consumption', domain: 'nutrition-health', theme: 'seafood consumption' },
+  { key: 'socio-pop', label: 'Socio-economic: Population Density', shortLabel: 'Population density', domain: 'socio-economic', theme: 'population density' },
 ];
 
 const STATUS_ORDER: QualityStatus[] = ['analysis-ready', 'cleaned', 'raw', 'deprecated'];

@@ -1,6 +1,6 @@
 {
   "id": "kaust-modis-aqua-chlorophyll-a-daily",
-  "title": "AQUA/MODIS Chlorophyll-a Daily L3m Ocean Color — Red Sea",
+  "title": "AQUA/MODIS Chlorophyll-a Daily L3m Ocean Color: Red Sea",
   "abstract": "Daily NASA AQUA/MODIS Level-3 mapped (L3m) ocean color chlorophyll-a concentration granules covering the Red Sea, downloaded per-scene from NASA OceanColor/OB.DAAC and archived internally in three parallel forms: an extracted directory of daily NetCDF granules, a tar bundle of the same granules, and a single time-merged ('combined') NetCDF file spanning the full record. Standard OC3/OCx chlorophyll-a algorithm product (variable 'chlor_a').",
   "domain": [
     "environmental"
@@ -102,7 +102,7 @@
           "label": "Chlorophyll-a concentration",
           "type": "float",
           "unit": "mg m^-3",
-          "description": "Apparent time-concatenated merge of the daily CHL granules into one multi-time-step NetCDF file. Internal structure (time dimension length, exact merge method) not verified — file was not opened/parsed.",
+          "description": "Apparent time-concatenated merge of the daily CHL granules into one multi-time-step NetCDF file. Internal structure (time dimension length, exact merge method) not verified; file was not opened/parsed.",
           "missing_values": [
             "NaN",
             "-32767"

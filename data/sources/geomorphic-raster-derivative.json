@@ -63,7 +63,7 @@
       "name": "KAUST research team",
       "email": ""
     },
-    "how_to_request": "Internal derivative — contact the team for the rasterization method used."
+    "how_to_request": "Internal derivative; contact the team for the rasterization method used."
   },
   "provenance": {
     "originator": "KAUST (derived internally)",
@@ -78,7 +78,7 @@
   "quality": {
     "status": "raw",
     "known_issues": [
-      "Two near-duplicate output files present (geomorphic_output.tif and geomorphic_raster.tif); relationship between them (e.g. one an intermediate/reprocessed version of the other) not documented — needs verification with whoever produced them."
+      "Two near-duplicate output files present (geomorphic_output.tif and geomorphic_raster.tif); relationship between them (e.g. one an intermediate/reprocessed version of the other) not documented; needs verification with whoever produced them."
     ],
     "last_verified": "2026-04-22"
   },

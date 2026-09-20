@@ -1,6 +1,6 @@
 {
   "id": "food-systems-dashboard-saudi-arabia",
-  "title": "Food Systems Dashboard — Saudi Arabia Country Profile Export",
+  "title": "Food Systems Dashboard: Saudi Arabia Country Profile Export",
   "abstract": "Cross-cutting food systems indicators for Saudi Arabia exported from the Food Systems Dashboard, spanning food environments, food supply chains, individual diets and nutrition outcomes, drivers (biophysical, socio-economic, political, innovation), and policies, compiled from multiple underlying sources (FAO, NCD-RisC, Beal et al., World Bank, etc.) with an accompanying metadata file defining each indicator's sector, source, unit, definition, and calculation method.",
   "domain": [
     "nutrition-health"
@@ -44,7 +44,7 @@
   },
   "resources": [
     {
-      "name": "Food Systems Dashboard export — Saudi Arabia (CSV)",
+      "name": "Food Systems Dashboard export: Saudi Arabia (CSV)",
       "format": "CSV",
       "path": "KAUST - DATA/Human Nutrition and Health/food-systems-dashboard-2026-04-02.csv",
       "size": "435.3 KB",

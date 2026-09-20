@@ -1,6 +1,6 @@
 {
   "id": "datasaudi-economic-indicators",
-  "title": "Data Saudi — National Economic Indicators (GDP, Prices, Labor, Markets)",
+  "title": "Data Saudi: National Economic Indicators (GDP, Prices, Labor, Markets)",
   "abstract": "National quarterly and monthly economic indicators for Saudi Arabia sourced from the Data Saudi open data portal, including nominal/real/seasonally-adjusted GDP by economic activity, wholesale price index, working hours by gender/nationality/sector, and Tadawul stock market indicators. Included for socio-economic context (e.g. agriculture/fishing sector GDP contribution) though most series are not marine- or coastal-specific.",
   "domain": [
     "socio-economic"

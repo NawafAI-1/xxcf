@@ -123,7 +123,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
   const doi = value(source.provenance.doi);
   const sourceUrl = value(source.provenance.source_url);
 
-  const period = `${source.temporal.start}–${source.temporal.ongoing ? 'present' : source.temporal.end}`;
+  const period = `${source.temporal.start}-${source.temporal.ongoing ? 'present' : source.temporal.end}`;
   const mailto = source.access.steward.email
     ? `mailto:${source.access.steward.email}?subject=${encodeURIComponent(`Data request: ${source.title}`)}`
     : null;
