@@ -1,2 +1,2 @@
-:HL["/xxcf/_next/static/css/08ecfb0bb2982a20.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"sources","param":null,"prefetchHints":0,"slots":{"children":{"name":"id","param":{"type":"d","key":"datasaudi-demographic-housing-indicators","siblings":null},"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}}}},"staleTime":300,"buildId":"K4_Ry3NNWS6Lez0dgtqWe"}
+:HL["/xxcf/_next/static/css/e4d90494608f70a0.css","style"]
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"sources","param":null,"prefetchHints":0,"slots":{"children":{"name":"id","param":{"type":"d","key":"datasaudi-demographic-housing-indicators","siblings":null},"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}}}},"staleTime":300,"buildId":"hRHiBR2xNQMSVT6EYetq6"}
