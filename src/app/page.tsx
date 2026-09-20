@@ -7,6 +7,7 @@ import BarList, { type BarItem } from '@/components/BarList';
 import DecadeChart from '@/components/DecadeChart';
 import Section from '@/components/Section';
 import SourceCard from '@/components/SourceCard';
+import OceanScene from '@/components/OceanScene';
 
 const READINESS_COLORS: Record<string, string> = {
   'analysis-ready': '#0f766e',
@@ -108,8 +109,12 @@ export default function HomePage() {
 
   return (
     <div className="space-y-6">
-      {/* Hero — the one place the catalog gets to state its case in plain words. */}
-      <section className="overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-teal-900 px-6 py-10 text-white shadow-sm sm:px-10 sm:py-14">
+      {/* Hero — the one place the catalog gets to state its case in plain words.
+          The ocean behind it is decoration, so it sits under the content and
+          stills itself for readers who ask for reduced motion. */}
+      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-teal-900 px-6 py-10 text-white shadow-sm sm:px-10 sm:py-14">
+        <OceanScene />
+        <div className="relative">
         <p className="text-xs font-semibold uppercase tracking-widest text-teal-300">
           KAUST Red Sea research data
         </p>
@@ -150,6 +155,7 @@ export default function HomePage() {
             </div>
           ))}
         </dl>
+        </div>
       </section>
 
       {/* Headline numbers: size of the catalog, and how much of it is usable today. */}
