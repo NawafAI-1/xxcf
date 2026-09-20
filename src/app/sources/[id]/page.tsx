@@ -5,7 +5,7 @@ import { parseSize, formatBytes } from '@/lib/stats';
 import { type BBox, bboxExtentLabel, isGlobalScale } from '@/lib/spatial';
 import { DOMAIN_COLORS } from '@/lib/types';
 import type { Source } from '@/lib/types';
-import MiniMapClient from './MiniMapClient';
+import BasinRibbon from '@/components/BasinRibbon';
 import CopyButton from '@/components/CopyButton';
 
 export function generateStaticParams() {
@@ -228,7 +228,9 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
               </Link>
             }
           >
-            <MiniMapClient bbox={bbox} color={accent} />
+            <div className="py-2 pl-10">
+              <BasinRibbon sources={allSources} focus={source} className="h-64" />
+            </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {source.spatial.subbasins.map((b) => (
                 <Link

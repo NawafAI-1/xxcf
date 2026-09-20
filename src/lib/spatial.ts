@@ -1,6 +1,6 @@
-// Shared geometry helpers for the maps. Both the basin map and the per-dataset
-// mini-map need the same notion of "this footprint is global, not Red Sea
-// scale", so it lives here rather than being re-derived in each component.
+// Shared geometry helpers. Every view that draws a footprint needs the same
+// notion of "this one is global, not Red Sea scale", so it lives here rather
+// than being re-derived in each of them.
 export type BBox = [number, number, number, number]; // [W, S, E, N]
 
 // A dataset whose bbox is much wider than the Red Sea basin itself (roughly
@@ -9,32 +9,8 @@ export type BBox = [number, number, number, number]; // [W, S, E, N]
 // footprint underneath, so they get their own treatment instead.
 export const GLOBAL_SCALE_DEGREES = 60;
 
-export function bboxSpan([w, s, e, n]: BBox) {
-  return { width: e - w, height: n - s };
-}
-
-export function isGlobalScale(bbox: BBox): boolean {
-  const { width, height } = bboxSpan(bbox);
-  return width > GLOBAL_SCALE_DEGREES || height > GLOBAL_SCALE_DEGREES;
-}
-
-/** Closed ring, counter-clockwise, ready for a GeoJSON Polygon. */
-export function bboxToRing([w, s, e, n]: BBox): [number, number][] {
-  return [
-    [w, s],
-    [e, s],
-    [e, n],
-    [w, n],
-    [w, s],
-  ];
-}
-
-export function bboxPolygon(bbox: BBox, properties: Record<string, unknown> = {}): GeoJSON.Feature<GeoJSON.Polygon> {
-  return {
-    type: 'Feature',
-    properties,
-    geometry: { type: 'Polygon', coordinates: [bboxToRing(bbox)] },
-  };
+export function isGlobalScale([w, s, e, n]: BBox): boolean {
+  return e - w > GLOBAL_SCALE_DEGREES || n - s > GLOBAL_SCALE_DEGREES;
 }
 
 /** "1,420 km x 780 km" — a size a reader can picture, from degrees they can't. */
