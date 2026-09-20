@@ -1,2 +1,2 @@
-:HL["/xxcf/_next/static/css/b595370c202f8a2d.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"sources","param":null,"prefetchHints":0,"slots":{"children":{"name":"id","param":{"type":"d","key":"gastat-health-care-statistics-2025","siblings":null},"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}}}},"staleTime":300,"buildId":"LRJQy4SDqPMrGtyphK7SL"}
+:HL["/xxcf/_next/static/css/847a92771ec36123.css","style"]
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"sources","param":null,"prefetchHints":0,"slots":{"children":{"name":"id","param":{"type":"d","key":"gastat-health-care-statistics-2025","siblings":null},"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}}}},"staleTime":300,"buildId":"rEYKd5KUHSQOYKk8dtS9x"}
