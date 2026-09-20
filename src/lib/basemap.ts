@@ -11,11 +11,30 @@
 //    poor backdrop for a footprint, but it beats an empty rectangle.
 import type { Map as MapLibreMap, StyleSpecification } from 'maplibre-gl';
 
-/** OpenFreeMap's Positron: quiet grey land, pale water, no key, no sign-up. */
-export const BASEMAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/positron';
+/**
+ * CARTO's own Positron, used when a key is configured. The key is read from the
+ * environment at build time and never stored in this repository: it is public
+ * once the site ships (any browser-side map key is), so it belongs in a build
+ * secret and behind CARTO's domain restrictions, not in version control.
+ */
+const CARTO_API_KEY = process.env.NEXT_PUBLIC_CARTO_API_KEY?.trim();
 
-/** MapLibre's demo tiles — reachable without a key, used only if the above is not. */
-export const FALLBACK_STYLE_URL = 'https://demotiles.maplibre.org/style.json';
+/** OpenFreeMap's Positron: the same quiet grey cartography, no key, no sign-up. */
+export const OPENFREEMAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/positron';
+
+export const BASEMAP_STYLE_URL = CARTO_API_KEY
+  ? `https://basemaps.cartocdn.com/gl/positron-gl-style/style.json?api_key=${encodeURIComponent(CARTO_API_KEY)}`
+  : OPENFREEMAP_STYLE_URL;
+
+/**
+ * Second choice, then third. With a CARTO key configured the key-less
+ * OpenFreeMap style is the first fallback — a quota problem or an expired key
+ * then costs cartography, not the map. MapLibre's demo tiles are the last
+ * remote option: a political map in pastels, but one that renders.
+ */
+export const FALLBACK_STYLE_URLS = CARTO_API_KEY
+  ? [OPENFREEMAP_STYLE_URL, 'https://demotiles.maplibre.org/style.json']
+  : ['https://demotiles.maplibre.org/style.json'];
 
 /** Plain water-coloured canvas, drawn under everything by both styles' own background. */
 export const CANVAS_COLOR = '#eaf1f6';
@@ -49,12 +68,11 @@ interface BasemapOptions {
 }
 
 /**
- * Wires up style-ready handling for a map and degrades in three steps, so the
- * data a map exists to show is never hostage to a basemap host:
- *   1. the primary style;
- *   2. the demo tiles, if the primary has not loaded in time;
- *   3. a plain water-coloured canvas, if neither is reachable — the footprints
- *      still draw, on an empty sea rather than on nothing.
+ * Wires up style-ready handling for a map and degrades step by step, so the
+ * data a map exists to show is never hostage to a basemap host: the primary
+ * style, then each fallback style in turn if the one before it has not loaded
+ * in time, and finally a plain water-coloured canvas — where the footprints
+ * still draw, on an empty sea rather than on nothing.
  * Returns a cleanup function.
  */
 export function withBasemap(map: MapLibreMap, { addOverlays, labelled = true }: BasemapOptions): () => void {
@@ -72,21 +90,18 @@ export function withBasemap(map: MapLibreMap, { addOverlays, labelled = true }: 
   // style never arrives it never fires, which is what the timers are for.
   map.once('load', draw);
 
-  timers.push(
-    setTimeout(() => {
-      if (drawn || map.isStyleLoaded()) return;
-      map.setStyle(FALLBACK_STYLE_URL);
-      map.once('styledata', draw);
-
-      timers.push(
-        setTimeout(() => {
-          if (drawn || map.isStyleLoaded()) return;
-          map.setStyle(canvasStyle());
-          map.once('styledata', draw);
-        }, STYLE_TIMEOUT_MS)
-      );
-    }, STYLE_TIMEOUT_MS)
-  );
+  const tryNext = (remaining: string[]) => {
+    timers.push(
+      setTimeout(() => {
+        if (drawn || map.isStyleLoaded()) return;
+        const [next, ...rest] = remaining;
+        map.setStyle(next ?? canvasStyle());
+        map.once('styledata', draw);
+        if (next) tryNext(rest);
+      }, STYLE_TIMEOUT_MS)
+    );
+  };
+  tryNext(FALLBACK_STYLE_URLS);
 
   return () => timers.forEach(clearTimeout);
 }

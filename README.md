@@ -90,6 +90,26 @@ goes on the open web, steward names and contact addresses included.
 
 The site then serves at `https://<owner>.github.io/<repo>/`.
 
+### Basemap (optional CARTO key)
+
+The maps render on OpenFreeMap's Positron style, which needs no key. CARTO's
+own basemaps can be used instead — set a repository secret named
+`CARTO_API_KEY` (Settings → Secrets and variables → Actions) and the deploy
+workflow passes it to the build as `NEXT_PUBLIC_CARTO_API_KEY`. With no secret
+set, the build simply uses OpenFreeMap.
+
+Two things to know before adding one:
+
+- **The key ships to the browser.** Any client-side map key does; it will be
+  readable in the published JavaScript. Restrict it to this site's domain in
+  the CARTO dashboard so it cannot be used elsewhere.
+- **Never commit it.** It belongs in the Actions secret, not in
+  `src/lib/basemap.ts` — this repository is public.
+
+If the primary style fails to load, the map falls back to the other style and
+then to a plain canvas, so a quota problem or an expired key costs cartography
+rather than the whole map.
+
 ### Base path
 
 A GitHub Pages project site lives under `/<repo>/`, not at the domain root, so
