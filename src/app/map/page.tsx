@@ -18,7 +18,7 @@ export default function MapPage() {
       <PageHeader
         accent={sectionAccent('/map')}
         title="Spatial footprints"
-        description={`A globe of the ${stats.datasets} datasets, each one a dot at the centre of its footprint, colored by domain. Click a dot to see what is there. Zoom in and the dots give way to the footprints themselves: global and regional products cover the whole basin, while survey data clusters where the fieldwork happened.`}
+        description={`Every place in the catalog, on a globe of the Earth as it looked yesterday. Each point is one location, sized by how many datasets sit there and colored by domain. Click a point to travel to it, then click it again to open what is there. Datasets with no single place, the global products, are listed below the map.`}
       />
       <MapPageClient sources={sources} />
     </div>
