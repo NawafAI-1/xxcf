@@ -9,11 +9,13 @@ const ACCESS_LABELS: Record<Source['access']['tier'], string> = {
   embargoed: 'Embargoed',
 };
 
+// Mirrors ACCESS_COLORS in types.ts: cyan open, slate internal, amber on
+// request, rose embargoed.
 const ACCESS_STYLES: Record<Source['access']['tier'], string> = {
-  public: 'bg-green-100 text-green-800',
-  'kaust-internal': 'bg-blue-100 text-blue-800',
-  restricted: 'bg-amber-100 text-amber-800',
-  embargoed: 'bg-red-100 text-red-800',
+  public: 'bg-cyan-100 text-cyan-900',
+  'kaust-internal': 'bg-slate-200 text-slate-700',
+  restricted: 'bg-amber-100 text-amber-900',
+  embargoed: 'bg-rose-100 text-rose-900',
 };
 
 export default function SourceCard({ source }: { source: Source }) {

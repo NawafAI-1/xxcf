@@ -2,6 +2,7 @@ import { getAllSources } from '@/lib/sources';
 import { getCatalogStats } from '@/lib/stats';
 import CoverageMatrix from '@/components/CoverageMatrix';
 import PageHeader from '@/components/PageHeader';
+import { sectionAccent } from '@/lib/sections';
 
 export const metadata = {
   title: 'Coverage gaps — Red Sea Marine Data Catalog',
@@ -15,6 +16,7 @@ export default function CoveragePage() {
   return (
     <div>
       <PageHeader
+        accent={sectionAccent('/coverage')}
         title="Coverage gap matrix"
         description="Rows are Red Sea subbasins, columns are the domain × theme combinations we track. Each cell shows the best data quality available for it; a grey cell means nothing in the catalog answers that question yet."
       />

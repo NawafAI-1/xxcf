@@ -2,6 +2,7 @@ import { getAllSources } from '@/lib/sources';
 import { getCatalogStats } from '@/lib/stats';
 import MapPageClient from './MapPageClient';
 import PageHeader from '@/components/PageHeader';
+import { sectionAccent } from '@/lib/sections';
 
 export const metadata = {
   title: 'Spatial footprints — Red Sea Marine Data Catalog',
@@ -15,6 +16,7 @@ export default function MapPage() {
   return (
     <div>
       <PageHeader
+        accent={sectionAccent('/map')}
         title="Spatial footprints"
         description={`Where each of the ${stats.datasets} datasets actually reaches, drawn as a bounding box and colored by domain. Global and regional products cover the whole basin; survey data clusters where the fieldwork happened.`}
       />

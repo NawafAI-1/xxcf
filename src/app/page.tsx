@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { getAllSources } from '@/lib/sources';
 import { getCatalogStats, compactNumber, formatBytes, recentlyVerified } from '@/lib/stats';
-import { DOMAIN_COLORS } from '@/lib/types';
+import { ACCESS_COLORS, DOMAIN_COLORS, QUALITY_COLORS } from '@/lib/types';
 import StatTile from '@/components/StatTile';
 import BarList, { type BarItem } from '@/components/BarList';
 import DecadeChart from '@/components/DecadeChart';
@@ -9,25 +9,11 @@ import Section from '@/components/Section';
 import SourceCard from '@/components/SourceCard';
 import OceanScene from '@/components/OceanScene';
 
-const READINESS_COLORS: Record<string, string> = {
-  'analysis-ready': '#0f766e',
-  cleaned: '#f59e0b',
-  raw: '#94a3b8',
-  deprecated: '#6b7280',
-};
-
 const READINESS_LABELS: Record<string, string> = {
   'analysis-ready': 'Analysis-ready',
   cleaned: 'Cleaned',
   raw: 'Raw',
   deprecated: 'Deprecated',
-};
-
-const ACCESS_COLORS: Record<string, string> = {
-  public: '#16a34a',
-  'kaust-internal': '#2563eb',
-  restricted: '#d97706',
-  embargoed: '#dc2626',
 };
 
 const ACCESS_LABELS: Record<string, string> = {
@@ -85,7 +71,7 @@ export default function HomePage() {
     key: q.key,
     label: READINESS_LABELS[q.key] ?? q.key,
     count: q.count,
-    color: READINESS_COLORS[q.key] ?? '#94a3b8',
+    color: QUALITY_COLORS[q.key],
     href: `/browse?quality=${q.key}`,
   }));
 
@@ -93,7 +79,7 @@ export default function HomePage() {
     key: a.key,
     label: ACCESS_LABELS[a.key] ?? a.key,
     count: a.count,
-    color: ACCESS_COLORS[a.key] ?? '#94a3b8',
+    color: ACCESS_COLORS[a.key],
     href: `/browse?access=${a.key}`,
   }));
 
@@ -101,7 +87,7 @@ export default function HomePage() {
     key: s.key,
     label: s.key.replace(/-/g, ' ').replace(/^\w/, (c) => c.toUpperCase()),
     count: s.count,
-    color: '#0d9488',
+    color: '#0e7490',
     href: `/browse?subbasin=${s.key}`,
   }));
 
@@ -172,14 +158,14 @@ export default function HomePage() {
           value={`${stats.analysisReady}`}
           hint={`${stats.qualityCounts.find((q) => q.key === 'raw')?.count ?? 0} still raw — cleaning is the bottleneck`}
           href="/browse?quality=analysis-ready"
-          accent="#16a34a"
+          accent="#047857"
         />
         <StatTile
           label="Openly licensed"
           value={`${stats.publicAccess} of ${stats.datasets}`}
           hint={`${stats.datasets - stats.publicAccess} need a KAUST internal request`}
           href="/browse?access=public"
-          accent="#2563eb"
+          accent="#0284c7"
         />
         <StatTile
           label="Indexed volume"

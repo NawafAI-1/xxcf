@@ -4,7 +4,8 @@ import { COVERAGE_COLUMNS, coverageCell } from '@/lib/coverage';
 
 const LEGEND: { label: string; color: string; note: string }[] = [
   { label: 'Analysis-ready', color: QUALITY_COLORS['analysis-ready'], note: 'usable as-is' },
-  { label: 'Cleaned / raw', color: QUALITY_COLORS.cleaned, note: 'needs processing first' },
+  { label: 'Cleaned', color: QUALITY_COLORS.cleaned, note: 'processed, needs checks' },
+  { label: 'Raw', color: QUALITY_COLORS.raw, note: 'needs processing first' },
   { label: 'No data', color: '#e2e8f0', note: 'nothing catalogued yet' },
 ];
 

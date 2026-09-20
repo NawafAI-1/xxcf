@@ -7,7 +7,9 @@ html {
 }
 
 body {
-  @apply bg-slate-50 text-slate-900;
+  /* Not neutral grey: a page about the sea sits on a faint tint of it. Light
+     enough that slate-900 body text still clears WCAG AA comfortably. */
+  @apply bg-sea-surface text-slate-900;
 }
 
 /* ---------------------------------------------------------------------------

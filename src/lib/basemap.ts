@@ -66,6 +66,25 @@ export function hideLabels(map: MapLibreMap): void {
   }
 }
 
+/**
+ * The demo style draws the tropics and the equator as dashed lines with
+ * labels. They are geography-lesson furniture, not context for a dataset
+ * footprint, and the dashes read as data when they cross one — so they go.
+ */
+export function hideGraticule(map: MapLibreMap): void {
+  const style = map.getStyle();
+  if (!style?.layers) return;
+  for (const layer of style.layers) {
+    if (/geoline|graticule|latitude|longitude|tropic/i.test(layer.id)) {
+      try {
+        map.setLayoutProperty(layer.id, 'visibility', 'none');
+      } catch {
+        // Layer vanished under a style swap; nothing here is worth failing on.
+      }
+    }
+  }
+}
+
 interface BasemapOptions {
   /** Adds the map's own sources and layers; called again after a style swap. */
   addOverlays: (map: MapLibreMap) => void;
@@ -87,6 +106,7 @@ export function withBasemap(map: MapLibreMap, { addOverlays, labelled = true }: 
   const draw = () => {
     if (drawn) return;
     drawn = true;
+    hideGraticule(map);
     if (!labelled) hideLabels(map);
     addOverlays(map);
   };

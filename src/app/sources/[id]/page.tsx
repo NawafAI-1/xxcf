@@ -19,18 +19,20 @@ const ACCESS_LABELS: Record<Source['access']['tier'], string> = {
   embargoed: 'Embargoed',
 };
 
+// And these mirror ACCESS_COLORS: cyan open, slate internal, amber on request.
 const ACCESS_STYLES: Record<Source['access']['tier'], string> = {
-  public: 'bg-green-100 text-green-800 ring-green-200',
-  'kaust-internal': 'bg-blue-100 text-blue-800 ring-blue-200',
-  restricted: 'bg-amber-100 text-amber-800 ring-amber-200',
-  embargoed: 'bg-red-100 text-red-800 ring-red-200',
+  public: 'bg-cyan-100 text-cyan-900 ring-cyan-200',
+  'kaust-internal': 'bg-slate-200 text-slate-700 ring-slate-300',
+  restricted: 'bg-amber-100 text-amber-900 ring-amber-200',
+  embargoed: 'bg-rose-100 text-rose-900 ring-rose-200',
 };
 
+// Badge tints mirror QUALITY_COLORS: teal usable, amber part-way, slate raw.
 const STATUS_STYLES: Record<Source['quality']['status'], string> = {
-  'analysis-ready': 'bg-teal-100 text-teal-800 ring-teal-200',
-  cleaned: 'bg-amber-100 text-amber-800 ring-amber-200',
-  raw: 'bg-slate-100 text-slate-700 ring-slate-200',
-  deprecated: 'bg-slate-200 text-slate-600 ring-slate-300',
+  'analysis-ready': 'bg-teal-100 text-teal-900 ring-teal-200',
+  cleaned: 'bg-amber-100 text-amber-900 ring-amber-200',
+  raw: 'bg-slate-200 text-slate-700 ring-slate-300',
+  deprecated: 'bg-slate-100 text-slate-500 ring-slate-200',
 };
 
 const STATUS_HINTS: Record<Source['quality']['status'], string> = {

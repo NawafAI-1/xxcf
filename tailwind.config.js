@@ -4,12 +4,19 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Keep in step with DOMAIN_COLORS in src/lib/types.ts.
         domain: {
-          environmental: '#2563eb',
-          ecological: '#16a34a',
+          environmental: '#0284c7',
+          ecological: '#047857',
           production: '#d97706',
-          'nutrition-health': '#db2777',
+          'nutrition-health': '#e11d48',
           'socio-economic': '#7c3aed',
+        },
+        // The site's own water: page background and the deep end of the hero.
+        sea: {
+          surface: '#f2f8fa',
+          shallow: '#0e7490',
+          deep: '#134e4a',
         },
       },
     },
