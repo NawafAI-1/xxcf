@@ -236,7 +236,7 @@ export default function HomePage() {
         <Panel
           eyebrow="Space"
           title="Where the work went"
-          description="Circles are locations holding data, numbered where several share a spot."
+          description="Each record's stated extent, stacked. The darker the water, the more reach it."
           action={{ href: '/map', label: 'Open the map' }}
           className="lg:col-span-2"
           footnote={
