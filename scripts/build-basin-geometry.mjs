@@ -17,10 +17,57 @@ const require = createRequire(import.meta.url);
 // and costs three times the bytes every visitor downloads.
 const topology = require('world-atlas/countries-50m.json');
 
-// Wide enough to hold the whole of the countries around the sea, so the
-// map shows Egypt, Sudan, Saudi Arabia, Eritrea, Ethiopia and Yemen entire
-// rather than a strip of each.
-const REGION = { west: 21, south: 2.5, east: 60, north: 33.5 };
+// The region is read off the catalogue rather than written down here, so the
+// map can follow the work. Add records from another sea, re-run this script,
+// and the coastline file widens to hold them; nothing in the map component is
+// pinned to the Red Sea. A floor keeps the neighbours of this basin on the map
+// even while every record sits inside it.
+const MARGIN = 6; // degrees of context to keep around the outermost record
+const FLOOR = { west: 22, south: 3, east: 54, north: 34 };
+/**
+ * A record wider than this describes several seas at once rather than a place.
+ * Two do in this catalogue, reaching the Mediterranean and the Indian Ocean,
+ * and framing on them would shrink the basin everyone actually works in to a
+ * sliver. They are listed on the map page instead of steering the map.
+ */
+const SINGLE_SEA = 30;
+
+function regionFromCatalogue() {
+  const dir = path.join('data', 'sources');
+  if (!fs.existsSync(dir)) return FLOOR;
+
+  let west = Infinity;
+  let south = Infinity;
+  let east = -Infinity;
+  let north = -Infinity;
+
+  for (const file of fs.readdirSync(dir).filter((f) => f.endsWith('.json'))) {
+    const record = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
+    const box = record.spatial?.bbox;
+    if (!Array.isArray(box) || box.length !== 4) continue;
+    const [w, s, e, n] = box;
+    // A global extent says nothing about where the work is, and a 0,0,0,0
+    // placeholder is not a place.
+    if (e - w >= 340 && n - s >= 160) continue;
+    if (e - w > SINGLE_SEA || n - s > SINGLE_SEA) continue;
+    if (w === 0 && s === 0 && e === 0 && n === 0) continue;
+    west = Math.min(west, w);
+    south = Math.min(south, s);
+    east = Math.max(east, e);
+    north = Math.max(north, n);
+  }
+
+  if (!Number.isFinite(west)) return FLOOR;
+  const bound = (value, low, high) => Math.min(Math.max(value, low), high);
+  return {
+    west: bound(Math.min(FLOOR.west, west - MARGIN), -180, 180),
+    south: bound(Math.min(FLOOR.south, south - MARGIN), -85, 85),
+    east: bound(Math.max(FLOOR.east, east + MARGIN), -180, 180),
+    north: bound(Math.max(FLOOR.north, north + MARGIN), -85, 85),
+  };
+}
+
+const REGION = regionFromCatalogue();
 const PRECISION = 200; // 0.005 degrees, about 550 m: enough at this scale
 const OUT = path.join('src', 'lib', 'basin-land.json');
 
@@ -108,5 +155,8 @@ for (const country of countries.features) {
 const collection = { type: 'FeatureCollection', region: REGION, features };
 fs.writeFileSync(OUT, JSON.stringify(collection));
 const kb = (fs.statSync(OUT).size / 1024).toFixed(0);
+console.log(
+  `region from the catalogue: ${REGION.west} to ${REGION.east}E, ${REGION.south} to ${REGION.north}N`
+);
 console.log(`${features.length} countries clipped to the region -> ${OUT} (${kb} KB)`);
 console.log(features.map((f) => f.properties.name).join(', '));
