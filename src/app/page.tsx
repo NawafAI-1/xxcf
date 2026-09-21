@@ -127,26 +127,6 @@ export default function HomePage() {
         />
       </div>
 
-      {/* The finding that should change a plan. */}
-      {worst ? (
-        <section className="rounded-2xl bg-slate-900 p-6 text-white shadow-[0_12px_32px_-20px_rgba(15,23,42,0.6)] sm:p-7">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-300">
-            The finding to act on
-          </p>
-          <p className="mt-3 max-w-3xl text-lg leading-snug sm:text-xl">
-            Not one of the {worst.total} {DOMAIN_LABELS[worst.domain]?.toLowerCase()} datasets is
-            analysis-ready. Every question about catch and landings starts with processing work that
-            nobody has scheduled yet.
-          </p>
-          <Link
-            href={`/browse?domain=${worst.domain}`}
-            className="mt-5 inline-block rounded-xl bg-white/10 px-4 py-2 text-sm font-semibold text-white ring-1 ring-inset ring-white/20 transition hover:bg-white/15"
-          >
-            See those {worst.total}{' '}records &rarr;
-          </Link>
-        </section>
-      ) : null}
-
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-5">
         <Panel
           eyebrow="Readiness"

@@ -18,7 +18,7 @@ export default function TimelinePage() {
       <PageHeader
         accent={sectionAccent('/timeline')}
         title="Timeline"
-        description="Every dataset drawn end to end, grouped by domain. The question this answers is the one a catalogue list cannot: for which years do we hold environment, ecology, catch, nutrition and economics at the same time?"
+        description="When each dataset covers, and which years hold every domain at once."
       />
       <TimelineRibbon timeline={timeline} />
     </div>

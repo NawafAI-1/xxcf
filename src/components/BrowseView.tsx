@@ -17,6 +17,7 @@ const FACET_LABELS: Record<FacetKey, string> = {
   quality: 'Status',
   theme: 'Theme',
   year: 'Year',
+  id: 'Dataset',
 };
 
 /**
@@ -44,6 +45,7 @@ function facetsFromLocation(): Facets {
     // names that contain one.
     theme: params.getAll('theme').map((t) => t.trim()).filter(Boolean),
     year: params.getAll('year').map((v) => v.trim()).filter((v) => /^\d{4}$/.test(v)),
+    id: params.getAll('id').flatMap((v) => v.split(',')).map((v) => v.trim()).filter(Boolean),
   };
 }
 
@@ -78,6 +80,9 @@ export default function BrowseView({ sources }: { sources: Source[] }) {
     if (facets.year.length) {
       result = result.filter((s) => facets.year.some((value) => coversYear(s, Number(value))));
     }
+    if (facets.id.length) {
+      result = result.filter((s) => facets.id.includes(s.id));
+    }
 
     if (searchIds) {
       const rank = new Map(searchIds.map((id, i) => [id, i]));
@@ -87,12 +92,28 @@ export default function BrowseView({ sources }: { sources: Source[] }) {
     return result;
   }, [sources, facets, searchIds]);
 
-  const activeChips = (Object.keys(FACET_LABELS) as FacetKey[]).flatMap((key) =>
-    facets[key].map((value) => ({ key, value: value as string }))
-  );
+  const titleById = useMemo(() => new Map(sources.map((s) => [s.id, s.title])), [sources]);
 
-  function removeChip(key: FacetKey, value: string) {
-    setFacets({ ...facets, [key]: (facets[key] as string[]).filter((v) => v !== value) } as Facets);
+  const activeChips = (Object.keys(FACET_LABELS) as FacetKey[]).flatMap((key) => {
+    // A map cluster hands over every record on its spot at once. One chip per
+    // id would be a wall of them, so a set arrives as a single chip that
+    // clears the whole selection.
+    if (key === 'id' && facets.id.length > 2) {
+      return [{ key, value: '__all__', label: `${facets.id.length} datasets from one location`, clearsAll: true }];
+    }
+    return facets[key].map((value) => ({
+      key,
+      value: value as string,
+      // An id is a slug; showing the record's own title is what a reader can
+      // actually recognise on the chip.
+      label: key === 'id' ? titleById.get(value as string) ?? (value as string) : undefined,
+      clearsAll: false,
+    }));
+  });
+
+  function removeChip(key: FacetKey, value: string, clearsAll = false) {
+    const next = clearsAll ? [] : (facets[key] as string[]).filter((v) => v !== value);
+    setFacets({ ...facets, [key]: next } as Facets);
   }
 
   return (
@@ -115,11 +136,13 @@ export default function BrowseView({ sources }: { sources: Source[] }) {
             {activeChips.map((chip) => (
               <button
                 key={`${chip.key}-${chip.value}`}
-                onClick={() => removeChip(chip.key, chip.value)}
+                onClick={() => removeChip(chip.key, chip.value, chip.clearsAll)}
                 className="group flex items-center gap-1 rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-medium text-slate-700 transition hover:bg-slate-300"
                 title={`Remove ${FACET_LABELS[chip.key].toLowerCase()} filter`}
               >
-                <span className="capitalize">{chip.value.replace(/-/g, ' ')}</span>
+                <span className={chip.label ? 'max-w-[18rem] truncate' : 'capitalize'}>
+                  {chip.label ?? chip.value.replace(/-/g, ' ')}
+                </span>
                 <span aria-hidden className="text-slate-500 group-hover:text-slate-700">
                   &times;
                 </span>
