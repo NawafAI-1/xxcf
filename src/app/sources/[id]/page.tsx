@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getAllSources, getSourceById, getRelatedSources } from '@/lib/sources';
 import { parseSize, formatBytes } from '@/lib/stats';
 import { type BBox, bboxExtentLabel, isGlobalScale } from '@/lib/spatial';
+import { periodLabel } from '@/lib/temporal';
 import { DOMAIN_COLORS } from '@/lib/types';
 import type { Source } from '@/lib/types';
 import BasinMap from '@/components/BasinMap';
@@ -123,7 +124,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
   const doi = value(source.provenance.doi);
   const sourceUrl = value(source.provenance.source_url);
 
-  const period = `${source.temporal.start}-${source.temporal.ongoing ? 'present' : source.temporal.end}`;
+  const period = periodLabel(source);
   const mailto = source.access.steward.email
     ? `mailto:${source.access.steward.email}?subject=${encodeURIComponent(`Data request: ${source.title}`)}`
     : null;
@@ -198,7 +199,11 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
 
       {/* The six numbers that decide whether this dataset fits a piece of work. */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
-        <Fact label="Coverage" value={period} hint={source.temporal.ongoing ? 'still collecting' : 'closed series'} />
+        <Fact
+          label="Coverage"
+          value={period}
+          hint={source.temporal.ongoing ? 'flagged as still collecting' : 'closed series'}
+        />
         <Fact label="Frequency" value={source.temporal.frequency} hint="how often it updates" />
         <Fact label="Resolution" value={source.spatial.resolution || 'Not recorded'} hint="spatial grain" />
         <Fact

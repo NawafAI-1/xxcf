@@ -3,6 +3,7 @@
 // years do we hold several kinds of data at once?
 import type { Domain, Source } from './types';
 import { DOMAINS } from './types';
+import { endYear, startYear } from './temporal';
 
 export interface TimelineRow {
   id: string;
@@ -40,8 +41,8 @@ export function buildTimeline(sources: Source[]): Timeline {
   const now = new Date().getFullYear();
 
   const rows: TimelineRow[] = sources.map((s) => {
-    const start = yearOf(s.temporal.start, now);
-    const end = s.temporal.ongoing ? now : Math.max(yearOf(s.temporal.end, start), start);
+    const start = startYear(s);
+    const end = endYear(s, now);
     return {
       id: s.id,
       title: s.title,

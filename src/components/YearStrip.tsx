@@ -23,6 +23,20 @@ export default function YearStrip({
       <div className={`flex ${height} items-end gap-px`}>
         {years.map((entry) => {
           const complete = entry.domains === 5;
+
+          // A year nothing covers has nothing to open, so it stays a bar.
+          if (entry.datasets === 0) {
+            return (
+              <span
+                key={entry.year}
+                title={`${entry.year}: no datasets cover this year`}
+                className="flex flex-1 items-end self-stretch"
+              >
+                <span className="h-[3%] w-full rounded-t-[2px] bg-slate-200" />
+              </span>
+            );
+          }
+
           return (
             <Link
               key={entry.year}

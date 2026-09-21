@@ -13,10 +13,15 @@ import { createRequire } from 'node:module';
 import { feature } from 'topojson-client';
 
 const require = createRequire(import.meta.url);
-const topology = require('world-atlas/countries-10m.json');
+// 50m rather than 10m: at a frame this wide the extra detail is invisible
+// and costs three times the bytes every visitor downloads.
+const topology = require('world-atlas/countries-50m.json');
 
-const REGION = { west: 30.5, south: 9.5, east: 47.5, north: 31.5 };
-const PRECISION = 1000; // three decimals, about 100 m
+// Wide enough to hold the whole of the countries around the sea, so the
+// map shows Egypt, Sudan, Saudi Arabia, Eritrea, Ethiopia and Yemen entire
+// rather than a strip of each.
+const REGION = { west: 21, south: 2.5, east: 60, north: 33.5 };
+const PRECISION = 200; // 0.005 degrees, about 550 m: enough at this scale
 const OUT = path.join('src', 'lib', 'basin-land.json');
 
 const inside = ([x, y], edge) => {
@@ -62,8 +67,23 @@ function clipRing(ring) {
   ]);
 }
 
+/** Rough area of a ring in square degrees, for dropping specks. */
+function ringArea(ring) {
+  let sum = 0;
+  for (let i = 0; i < ring.length; i += 1) {
+    const [x1, y1] = ring[i];
+    const [x2, y2] = ring[(i + 1) % ring.length];
+    sum += x1 * y2 - x2 * y1;
+  }
+  return Math.abs(sum / 2);
+}
+
+const MIN_AREA = 0.004; // about 50 km2: below this nothing is visible here
+
 function clipPolygon(rings) {
-  const clipped = rings.map(clipRing).filter((r) => r && r.length >= 4);
+  const clipped = rings
+    .map(clipRing)
+    .filter((r) => r && r.length >= 4 && ringArea(r) >= MIN_AREA);
   return clipped.length ? clipped : null;
 }
 

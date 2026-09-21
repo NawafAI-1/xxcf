@@ -8,6 +8,7 @@ import { ACCESS_COLORS, DOMAIN_COLORS, QUALITY_COLORS } from '@/lib/types';
 import BasinMap from '@/components/BasinMap';
 import Meter from '@/components/Meter';
 import Panel from '@/components/Panel';
+import Figure from '@/components/Figure';
 import SourceCard from '@/components/SourceCard';
 import YearStrip from '@/components/YearStrip';
 import OceanScene from '@/components/OceanScene';
@@ -26,44 +27,6 @@ const EXPLORE = [
   { href: '/timeline', title: 'Timeline', body: 'Every dataset end to end, and which years hold several kinds at once.' },
   { href: '/coverage', title: 'Coverage gaps', body: 'Subbasin by theme, with every filled cell opening its datasets.' },
 ];
-
-/** One headline figure, with room for a line of context underneath. */
-function Figure({
-  label,
-  value,
-  hint,
-  href,
-  accent,
-}: {
-  label: string;
-  value: string;
-  hint: string;
-  href?: string;
-  accent: string;
-}) {
-  const body = (
-    <>
-      <span className="block h-1 w-8 rounded-full" style={{ backgroundColor: accent }} aria-hidden />
-      <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-        {label}
-      </p>
-      <p className="mt-1.5 text-[2rem] font-semibold leading-none tracking-tight text-slate-900">
-        {value}
-      </p>
-      <p className="mt-2 text-xs leading-relaxed text-slate-500">{hint}</p>
-    </>
-  );
-  const className =
-    'block rounded-2xl bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_32px_-20px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/80 transition' +
-    (href ? ' hover:-translate-y-0.5 hover:ring-slate-300' : '');
-  return href ? (
-    <Link href={href} className={className}>
-      {body}
-    </Link>
-  ) : (
-    <div className={className}>{body}</div>
-  );
-}
 
 export default function HomePage() {
   const sources = getAllSources();

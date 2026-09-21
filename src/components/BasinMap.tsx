@@ -23,9 +23,12 @@ interface BasinMapProps {
   compact?: boolean;
 }
 
-const BASIN_VIEW = { west: 31.5, east: 45.5, south: 10.5, north: 30.5 };
+// The whole neighbourhood: Egypt to Oman, Jordan to the Horn. The sea is
+// the subject, but a strip of coast either side says nothing about where it
+// is; the countries around it do.
+const BASIN_VIEW = { west: 21.5, east: 59.5, south: 3, north: 33.2 };
 /** The extent the coastline file covers; nothing can be shown beyond it. */
-const DATA_LIMITS = { west: 30.5, east: 47.5, south: 9.5, north: 31.5 };
+const DATA_LIMITS = { west: 21, east: 60, south: 2.5, north: 33.5 };
 const SCALE = 60; // svg units per degree of latitude
 
 interface View {
@@ -99,19 +102,24 @@ const LAND = land as unknown as {
 
 /** Place names worth carrying, with the anchor inside their own territory. */
 const PLACES: { name: string; lon: number; lat: number }[] = [
-  { name: 'EGYPT', lon: 32.6, lat: 26.5 },
-  { name: 'SAUDI ARABIA', lon: 42.4, lat: 24.5 },
-  { name: 'SUDAN', lon: 33.4, lat: 18.5 },
-  { name: 'ERITREA', lon: 38.6, lat: 15.4 },
-  { name: 'YEMEN', lon: 44.4, lat: 15.2 },
+  { name: 'EGYPT', lon: 29.5, lat: 26.5 },
+  { name: 'SAUDI ARABIA', lon: 46.0, lat: 22.0 },
+  { name: 'SUDAN', lon: 29.5, lat: 15.5 },
+  { name: 'ERITREA', lon: 38.5, lat: 15.3 },
+  { name: 'ETHIOPIA', lon: 39.5, lat: 8.5 },
+  { name: 'YEMEN', lon: 47.0, lat: 15.5 },
+  { name: 'OMAN', lon: 56.0, lat: 20.5 },
+  { name: 'SOMALIA', lon: 46.5, lat: 6.0 },
+  { name: 'JORDAN', lon: 36.6, lat: 31.2 },
+  { name: 'CHAD', lon: 22.5, lat: 15.0 },
 ];
 
 const LABELS: { name: string; lon: number; lat: number; anchor?: 'start' | 'middle' | 'end' }[] = [
-  { name: 'Gulf of Aqaba', lon: 35.6, lat: 28.9, anchor: 'start' },
-  { name: 'Gulf of Suez', lon: 32.9, lat: 27.6, anchor: 'start' },
-  { name: 'Red Sea', lon: 36.6, lat: 23.4, anchor: 'middle' },
-  { name: 'Farasan', lon: 41.9, lat: 16.6, anchor: 'start' },
-  { name: 'Bab el-Mandeb', lon: 43.6, lat: 12.6, anchor: 'start' },
+  { name: 'Red Sea', lon: 35.2, lat: 25.6, anchor: 'middle' },
+  { name: 'Gulf of Aden', lon: 47.5, lat: 12.2, anchor: 'middle' },
+  { name: 'Arabian Sea', lon: 56.5, lat: 13.0, anchor: 'middle' },
+  { name: 'The Gulf', lon: 51.5, lat: 27.5, anchor: 'middle' },
+  { name: 'Mediterranean', lon: 28.0, lat: 32.6, anchor: 'middle' },
 ];
 
 interface Cluster {
@@ -123,13 +131,15 @@ interface Cluster {
 
 function cluster(sources: Source[], view: View): Cluster[] {
   const byKey = new Map<string, Cluster>();
+  const step = Math.max(0.5, (view.east - view.west) / 22);
+  const snap = (value: number) => Math.round(value / step) * step;
   for (const source of sources) {
     if (!source.spatial.bbox || isGlobalScale(source.spatial.bbox as BBox)) continue;
     const [w, s, e, n] = source.spatial.bbox as BBox;
     const lon = (w + e) / 2;
     const lat = (s + n) / 2;
     if (lon < view.west || lon > view.east || lat < view.south || lat > view.north) continue;
-    const key = `${Math.round(lon * 2) / 2},${Math.round(lat * 2) / 2}`;
+    const key = `${snap(lon)},${snap(lat)}`;
     const existing = byKey.get(key);
     if (existing) existing.sources.push(source);
     else byKey.set(key, { key, lon, lat, sources: [source] });
@@ -142,6 +152,9 @@ export default function BasinMap({ sources, focus, compact = false }: BasinMapPr
   const focusGlobal = box ? isGlobalScale(box) : false;
   const view = box && !focusGlobal ? viewFor(box) : BASIN_VIEW;
   const { width, height, x, y } = projector(view);
+  // Sizes are in map units, so they have to be a fraction of the frame rather
+  // than fixed: at a frame this wide, an 11-unit label renders at two pixels.
+  const u = width / 100;
   const clusters = focus ? [] : cluster(sources, view);
   const sites = siteMentions(focus ? [focus] : sources).filter(
     ({ site }) =>
@@ -186,7 +199,7 @@ export default function BasinMap({ sources, focus, compact = false }: BasinMapPr
         <rect width={width} height={height} fill="url(#sea)" />
 
         {/* Graticule, one step off the sea so it reads as reference, not data. */}
-        <g stroke="#ffffff" strokeOpacity="0.35" strokeWidth="1">
+        <g stroke="#ffffff" strokeOpacity="0.35" strokeWidth={u * 0.12}>
           {[10, 15, 20, 25, 30]
             .filter((lat) => lat > view.south && lat < view.north)
             .map((lat) => (
@@ -212,7 +225,7 @@ export default function BasinMap({ sources, focus, compact = false }: BasinMapPr
         </g>
 
         {!compact && (
-          <g fill="#a08d6a" fontSize="11" letterSpacing="1.5" fontWeight="600">
+          <g fill="#a08d6a" fontSize={u * 1.9} letterSpacing={u * 0.18} fontWeight="600">
             {PLACES.filter(
               (p) => p.lon > view.west && p.lon < view.east && p.lat > view.south && p.lat < view.north
             ).map((place) => (
@@ -223,7 +236,7 @@ export default function BasinMap({ sources, focus, compact = false }: BasinMapPr
           </g>
         )}
 
-        <g fill="#25707f" fontSize="12" fontStyle="italic">
+        <g fill="#25707f" fontSize={u * 2.1} fontStyle="italic">
           {LABELS.filter(
             (l) => l.lon > view.west && l.lon < view.east && l.lat > view.south && l.lat < view.north
           ).map((label) => (
@@ -260,10 +273,10 @@ export default function BasinMap({ sources, focus, compact = false }: BasinMapPr
               height={Math.max(y(box[1]) - y(box[3]), 4)}
               fill="none"
               stroke={accent}
-              strokeWidth="1.5"
-              strokeDasharray="6 4"
+              strokeWidth={u * 0.25}
+              strokeDasharray={`${u} ${u * 0.7}`}
               strokeOpacity="0.65"
-              rx="3"
+              rx={u * 0.4}
             />
           </g>
         ) : null}
@@ -275,21 +288,21 @@ export default function BasinMap({ sources, focus, compact = false }: BasinMapPr
               <title>
                 {`${site.name}: named in ${named.length} record${named.length === 1 ? '' : 's'}`}
               </title>
-              <circle cx={x(site.lon)} cy={y(site.lat)} r="4.5" fill="#ffffff" fillOpacity="0.9" />
+              <circle cx={x(site.lon)} cy={y(site.lat)} r={u * 0.75} fill="#ffffff" fillOpacity="0.9" />
               <circle
                 cx={x(site.lon)}
                 cy={y(site.lat)}
-                r="2.5"
+                r={u * 0.42}
                 fill="#1f2937"
                 fillOpacity="0.75"
               />
               <text
-                x={x(site.lon) + 7}
-                y={y(site.lat) + 3.5}
-                fontSize="10"
+                x={x(site.lon) + u * 1.1}
+                y={y(site.lat) + u * 0.6}
+                fontSize={u * 1.7}
                 fill="#374151"
                 stroke="#ffffff"
-                strokeWidth="2.5"
+                strokeWidth={u * 0.45}
                 paintOrder="stroke"
               >
                 {site.name}
@@ -300,7 +313,7 @@ export default function BasinMap({ sources, focus, compact = false }: BasinMapPr
 
         {/* Every location that holds data. */}
         {clusters.map((group) => {
-          const radius = 6 + Math.min(group.sources.length, 9) * 1.6;
+          const radius = u * 1.1 + Math.min(group.sources.length, 9) * u * 0.28;
           const single = group.sources.length === 1;
           const href = single ? `/sources/${group.sources[0].id}` : `/browse?subbasin=${group.sources[0].spatial.subbasins[0] ?? 'central'}`;
           return (
@@ -317,7 +330,7 @@ export default function BasinMap({ sources, focus, compact = false }: BasinMapPr
                 <circle
                   cx={x(group.lon)}
                   cy={y(group.lat)}
-                  r={radius + 2.5}
+                  r={radius + u * 0.42}
                   fill="#ffffff"
                   fillOpacity="0.95"
                 />
@@ -331,9 +344,9 @@ export default function BasinMap({ sources, focus, compact = false }: BasinMapPr
                 {group.sources.length > 1 ? (
                   <text
                     x={x(group.lon)}
-                    y={y(group.lat) + 4}
+                    y={y(group.lat) + u * 0.62}
                     textAnchor="middle"
-                    fontSize="11"
+                    fontSize={u * 1.8}
                     fontWeight="700"
                     fill="#ffffff"
                   >

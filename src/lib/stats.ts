@@ -13,6 +13,7 @@ import type {
 } from './types';
 import { DOMAINS, SUBBASINS } from './types';
 import { COVERAGE_COLUMNS, coverageCell } from './coverage';
+import { endYear, startYear } from './temporal';
 
 export interface Count<T extends string> {
   key: T;
@@ -135,8 +136,8 @@ export function getCatalogStats(sources: Source[]): CatalogStats {
     lineageLinks += source.provenance.derived_from.length;
     if (source.quality.last_verified > lastVerified) lastVerified = source.quality.last_verified;
 
-    const start = year(source.temporal.start);
-    const end = source.temporal.ongoing ? CURRENT_YEAR : year(source.temporal.end);
+    const start = startYear(source);
+    const end = endYear(source, CURRENT_YEAR);
     if (Number.isFinite(start)) {
       earliestYear = Math.min(earliestYear, start);
       latestYear = Math.max(latestYear, Number.isFinite(end) ? end : start);
