@@ -294,6 +294,33 @@ const COUNTRY_COLORS = [
 ];
 
 /**
+ * The countries this map names while the frame is on the basin.
+ *
+ * Every state with a shore on the Red Sea or the Gulf of Aden, which is the
+ * water the catalogue is about. Their neighbours inland stay as coloured
+ * context: a chart of where marine data reaches has no reason to name Iraq or
+ * Kyrgyzstan, and the frame was carrying eighteen names for a sea with eight
+ * coastlines.
+ *
+ * Edit this list to change which are named. Names must match Natural Earth's
+ * spelling exactly, which is what src/lib/basin-land.json carries; a name that
+ * matches nothing here is simply never drawn. Empty the list and the map falls
+ * back to naming by size, as it does when the frame is walked off the basin.
+ */
+const BASIN_STATES = new Set([
+  'Djibouti',
+  'Egypt',
+  'Eritrea',
+  'Israel',
+  'Jordan',
+  'Saudi Arabia',
+  'Somalia',
+  'Somaliland',
+  'Sudan',
+  'Yemen',
+]);
+
+/**
  * Which country names fit on the frame, biggest first.
  *
  * A country is only named while there is room for the word inside its own
@@ -305,7 +332,9 @@ function countryLabels(
   features: LandFeature[],
   view: View,
   project: Project,
-  unit: number
+  unit: number,
+  /** When set, only these countries are named; otherwise size decides. */
+  only?: Set<string>
 ): { name: string; x: number; y: number; size: number }[] {
   const viewArea = (view.east - view.west) * (view.north - view.south);
   const placed: { x: number; y: number; halfWidth: number; halfHeight: number }[] = [];
@@ -315,6 +344,7 @@ function countryLabels(
     .filter((f) => {
       const at = f.properties.at;
       if (!at) return false;
+      if (only && only.size > 0 && !only.has(f.properties.name)) return false;
       return at[0] > view.west && at[0] < view.east && at[1] > view.south && at[1] < view.north;
     })
     .sort((a, b) => (b.properties.area ?? 0) - (a.properties.area ?? 0));
@@ -455,9 +485,18 @@ export default function BasinMap({
   // on once it has been walked out to the continent they pile into a knot over
   // the Red Sea and say nothing about what is on screen.
   const nearBasin = view.east - view.west < (DETAIL_REGION.east - DETAIL_REGION.west) * 1.7;
+  // On the basin the map names the basin's own states; walked out to the
+  // continent it falls back to naming by size, because a list of ten would
+  // leave the rest of the world blank.
   const names = compact
     ? []
-    : countryLabels(landFeatures, view, { width, height, x, y }, u);
+    : countryLabels(
+        landFeatures,
+        view,
+        { width, height, x, y },
+        u,
+        inDetail ? BASIN_STATES : undefined
+      );
 
   const prints = useMemo(
     () => (focus ? [] : footprints(sources, view)),
