@@ -1,2 +1,2 @@
-:HL["/xxcf/_next/static/css/6f3942c4f97db0dc.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"sources","param":null,"prefetchHints":0,"slots":{"children":{"name":"id","param":{"type":"d","key":"datasaudi-economic-indicators","siblings":null},"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}}}},"staleTime":300,"buildId":"yortBpwT5Ut6kru43Gdho"}
+:HL["/xxcf/_next/static/css/6abbef5ed8e74f81.css","style"]
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"sources","param":null,"prefetchHints":0,"slots":{"children":{"name":"id","param":{"type":"d","key":"datasaudi-economic-indicators","siblings":null},"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}}}},"staleTime":300,"buildId":"boUaXIyuMASi6AwiAGMO1"}
