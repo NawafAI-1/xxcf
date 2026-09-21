@@ -311,7 +311,7 @@ const BASIN_STATES = new Set([
   'Djibouti',
   'Egypt',
   'Eritrea',
-  'Israel',
+  'PALESTINE',
   'Jordan',
   'Saudi Arabia',
   'Somalia',
