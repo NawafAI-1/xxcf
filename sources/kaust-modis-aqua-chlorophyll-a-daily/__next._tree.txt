@@ -1,2 +1,2 @@
-:HL["/xxcf/_next/static/css/af2142c2def0d337.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"sources","param":null,"prefetchHints":0,"slots":{"children":{"name":"id","param":{"type":"d","key":"kaust-modis-aqua-chlorophyll-a-daily","siblings":null},"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}}}},"staleTime":300,"buildId":"bctAIE0BJs5fte4ugpKLl"}
+:HL["/xxcf/_next/static/css/6f3942c4f97db0dc.css","style"]
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"sources","param":null,"prefetchHints":0,"slots":{"children":{"name":"id","param":{"type":"d","key":"kaust-modis-aqua-chlorophyll-a-daily","siblings":null},"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}}}},"staleTime":300,"buildId":"yortBpwT5Ut6kru43Gdho"}
