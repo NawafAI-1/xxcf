@@ -16,6 +16,12 @@ export interface Facets {
   theme: string[];
   /** A single year, arriving from the timeline: records covering it. */
   year: string[];
+  /**
+   * Exact record ids, arriving from a map cluster. A cluster knows precisely
+   * which datasets sit on its spot, so it hands them over by name rather than
+   * guessing at a subbasin that only some of them share.
+   */
+  id: string[];
 }
 
 export const EMPTY_FACETS: Facets = {
@@ -25,6 +31,7 @@ export const EMPTY_FACETS: Facets = {
   quality: [],
   theme: [],
   year: [],
+  id: [],
 };
 
 function toggle<T>(list: T[], value: T): T[] {

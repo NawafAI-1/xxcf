@@ -65,13 +65,13 @@ export default function WherePage() {
       <PageHeader
         accent={sectionAccent('/map')}
         title="Where the data is"
-        description="Where the catalogue's work actually sits, from the Gulf of Aqaba down to Bab el-Mandeb. Each circle is a location that holds data, sized and numbered by how much; hover to see what is there, click to open it."
+        description="Every location holding data, sized by how much, and where coverage thins."
       />
 
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
         <Panel
           title={`${local.length - offFrame.length} datasets on the basin`}
-          footnote="Coastline from Natural Earth, drawn straight into the page: no tiles, no key, and nothing fetched while you read it. A numbered circle is that many datasets centred on the same spot; click it to see them, or click a single one to open it."
+          footnote="A numbered circle opens exactly those records; its ring is the domains present. Bars at the left are datasets reaching each half degree of latitude. Natural Earth coastline, nothing fetched at runtime."
         >
           <ul className="mb-4 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
             {Object.entries(DOMAIN_LABELS).map(([key, label]) => (
@@ -86,16 +86,15 @@ export default function WherePage() {
             ))}
           </ul>
 
-          <BasinMap sources={sources} />
+          <BasinMap sources={sources} showCoverage />
         </Panel>
 
         <div className="space-y-4">
           <Panel eyebrow="The north-south gradient" title={`${max} datasets at the widest, ${min} at the thinnest`}>
             <p className="text-sm leading-relaxed text-slate-600">
-              {max} datasets reach the basin around {widest ? `${widest.lat.toFixed(1)}°N` : 'the centre'},
-              and {min} reach {thinnest ? `${thinnest.lat.toFixed(1)}°N` : 'the strait'}. The southern
-              Red Sea is roughly half as observed as the centre, which is the clearest case in this
-              catalogue for where to survey next.
+              {max} datasets reach {widest ? `${widest.lat.toFixed(1)}°N` : 'the centre'}, {min} reach{' '}
+              {thinnest ? `${thinnest.lat.toFixed(1)}°N` : 'the strait'}. The south is half as observed
+              as the centre.
             </p>
           </Panel>
 
@@ -103,8 +102,8 @@ export default function WherePage() {
             <Panel
               eyebrow="Where to look next"
               title={`${thin.from.toFixed(1)}°N to ${thin.to.toFixed(1)}°N`}
-              description={`The least observed stretch of the basin, with ${thin.count} datasets reaching it. These records sit closest to that water, so extending a survey or subsetting a wider product is the cheapest way to cover it.`}
-              footnote="A prioritisation aid, not a prediction. Whether any of these actually transfer to that water is a question for the people who made them."
+              description={`The basin's least observed stretch: ${thin.count} datasets reach it. These sit closest.`}
+              footnote="A prioritisation aid, not a prediction."
             >
               {thin.nearby.length > 0 ? (
                 <>
@@ -131,7 +130,7 @@ export default function WherePage() {
           <Panel
             eyebrow="On the map"
             title="Field sites named in the records"
-            description="A place appears only because a record names it in its own words, not because of a region tag."
+            description="Named in a record's own words, not from a region tag."
           >
             <ul className="flex flex-wrap gap-1.5">
               {sites.map(({ site, sources: named }) => (
@@ -152,7 +151,7 @@ export default function WherePage() {
           <Panel
             eyebrow="Off the frame"
             title={`${offFrame.length} centred elsewhere`}
-            description="Regional records whose middle falls beyond this map: real places, just not this sea."
+            description="Real places, just not this sea."
           >
             <ul className="space-y-1.5">
               {offFrame.map((s) => (
@@ -166,7 +165,7 @@ export default function WherePage() {
           <Panel
             eyebrow="No single place"
             title={`${global.length} global datasets`}
-            description="These cover the basin because they cover everywhere, so no point on the map belongs to them."
+            description="They cover everywhere, so no point on the map is theirs."
           >
             <ul className="space-y-1.5">
               {global.map((s) => (
