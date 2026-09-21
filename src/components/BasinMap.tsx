@@ -322,9 +322,11 @@ function countryLabels(
   for (const country of candidates) {
     const [lon, lat] = country.properties.at!;
     const share = (country.properties.area ?? 0) / viewArea;
-    // Below a thousandth of the frame a country is a speck, and its name would
-    // be a word floating over its neighbours.
-    if (share < 0.001) continue;
+    // Below this a country is a speck and its name would be a word floating
+    // over its neighbours. The floor sits where it does so that small states
+    // with a place on this coast, Palestine and Cyprus among them, are named
+    // rather than left as unlabelled colour.
+    if (share < 0.0005) continue;
 
     const size = unit * (share > 0.06 ? 2 : share > 0.02 ? 1.7 : 1.45);
     const text = country.properties.name.toUpperCase();
@@ -333,14 +335,29 @@ function countryLabels(
     const px = project.x(lon);
     const py = project.y(lat);
 
-    const clash = placed.some(
-      (q) =>
-        Math.abs(q.x - px) < q.halfWidth + halfWidth && Math.abs(q.y - py) < q.halfHeight + halfHeight
-    );
-    if (clash) continue;
+    const free = (cx: number, cy: number) =>
+      !placed.some(
+        (q) =>
+          Math.abs(q.x - cx) < q.halfWidth + halfWidth &&
+          Math.abs(q.y - cy) < q.halfHeight + halfHeight
+      );
 
-    placed.push({ x: px, y: py, halfWidth, halfHeight });
-    out.push({ name: text, x: px, y: py, size });
+    // A small state beside a large one loses every time on the centroid alone:
+    // Palestine's anchor sits half a degree from Israel's. Stepping the name
+    // off the centroid before giving up is what lets both be named.
+    const step = halfHeight * 2.3;
+    const spots: [number, number][] = [
+      [px, py],
+      [px, py - step],
+      [px, py + step],
+      [px + halfWidth * 1.2, py],
+      [px - halfWidth * 1.2, py],
+    ];
+    const spot = spots.find(([cx, cy]) => free(cx, cy));
+    if (!spot) continue;
+
+    placed.push({ x: spot[0], y: spot[1], halfWidth, halfHeight });
+    out.push({ name: text, x: spot[0], y: spot[1], size });
   }
   return out;
 }
