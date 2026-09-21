@@ -6,6 +6,7 @@ import { DOMAINS, SUBBASINS, ACCESS_TIERS, QUALITY_STATUSES } from '@/lib/types'
 import SearchBar from './SearchBar';
 import FacetPanel, { EMPTY_FACETS, type Facets } from './FacetPanel';
 import SourceCard from './SourceCard';
+import { coversYear } from '@/lib/temporal';
 
 type FacetKey = keyof Facets;
 
@@ -75,15 +76,7 @@ export default function BrowseView({ sources }: { sources: Source[] }) {
       result = result.filter((s) => s.themes.some((t) => facets.theme.includes(t)));
     }
     if (facets.year.length) {
-      const now = new Date().getFullYear();
-      result = result.filter((s) =>
-        facets.year.some((value) => {
-          const year = Number(value);
-          const start = parseInt(s.temporal.start.slice(0, 4), 10);
-          const end = s.temporal.ongoing ? now : parseInt(s.temporal.end.slice(0, 4), 10);
-          return year >= start && year <= (Number.isFinite(end) ? end : start);
-        })
-      );
+      result = result.filter((s) => facets.year.some((value) => coversYear(s, Number(value))));
     }
 
     if (searchIds) {

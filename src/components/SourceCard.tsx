@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { Source } from '@/lib/types';
 import { DOMAIN_COLORS } from '@/lib/types';
+import { periodLabel } from '@/lib/temporal';
 
 const ACCESS_LABELS: Record<Source['access']['tier'], string> = {
   public: 'Public',
@@ -46,8 +47,9 @@ export default function SourceCard({ source }: { source: Source }) {
         <span>
           bbox [{w}, {s}, {e}, {n}]
         </span>
-        <span>
-          {source.temporal.start}-{source.temporal.ongoing ? 'present' : source.temporal.end}
+        <span title={source.temporal.ongoing ? 'Still being collected' : undefined}>
+          {periodLabel(source)}
+          {source.temporal.ongoing ? ' +' : ''}
         </span>
         <span className="capitalize">{source.quality.status.replace('-', ' ')}</span>
       </div>
