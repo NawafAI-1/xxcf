@@ -130,7 +130,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
     : null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <nav className="text-sm text-slate-500">
         <Link href="/browse" className="font-medium text-teal-700 hover:text-teal-800">
           ← All datasets
@@ -224,7 +224,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
+        <div className="space-y-4 lg:col-span-2">
           <Card
             title="Where it reaches"
             action={
@@ -388,7 +388,7 @@ export default async function SourceDetailPage({ params }: { params: Promise<{ i
         </div>
 
         {/* Sidebar: the questions asked right before someone commits to using it. */}
-        <div className="space-y-6 lg:sticky lg:top-20 lg:self-start">
+        <div className="space-y-4 lg:sticky lg:top-20 lg:self-start">
           <Card title="Getting access">
             <dl>
               <Row label="Tier">

@@ -31,11 +31,11 @@ export default function NetworkPage() {
   const maxCross = bridges[0]?.crossLinks ?? 1;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         accent={accent}
         title="What joins to what"
-        description={`Every catalogued dataset is a node, placed in the domain it belongs to. A line means the two records could plausibly be joined: either one was derived from the other, or they share vocabulary. Weak links, the ones resting on a single shared word, are hidden by default, because two thirds of the ${findings.totalLinks} possible connections are that thin.`}
+        description={`One node per dataset, placed in its domain. A line means the two could plausibly be joined. Two thirds of the ${findings.totalLinks} possible links rest on a single shared word, so those are hidden.`}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -48,29 +48,29 @@ export default function NetworkPage() {
         <Figure
           label="Cross a domain"
           value={String(findings.crossDomainLinks)}
-          hint="Joins between records that share no domain. These are the ones a reader browsing one domain never meets."
+          hint="Between records sharing no domain. A reader in one domain never meets them."
           accent="#d97706"
         />
         <Figure
           label="Connected"
           value={`${Math.round(findings.connectedShare * 100)}%`}
-          hint={`Of ${graph.nodes.length} records, this share has at least one strong link to another.`}
+          hint={`Of ${graph.nodes.length} records, with at least one strong link.`}
           accent="#0284c7"
         />
         <Figure
           label="Connected to nothing"
           value={String(findings.orphans.length)}
-          hint="Records that share no vocabulary at all with the rest of the catalog, at any threshold."
+          hint="No shared vocabulary at any threshold."
           accent="#64748b"
         />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid items-start gap-4 lg:grid-cols-2">
         <Panel
           eyebrow="The finding to act on"
           title={`${bridges.length} records carry the traffic between domains`}
-          description="A bridge is a dataset whose strong links land outside its own domain. Cut these and the catalog falls into five disconnected piles, so they are the records worth curating first."
-          footnote="Cross-domain links counted at the default threshold. A record can bridge more than one domain."
+          description="Their strong links land outside their own domain. Cut these and the catalog falls into five piles."
+          footnote="Counted at the default threshold. A record can bridge more than one domain."
         >
           <ul className="space-y-3">
             {bridges.map((b) => (
@@ -108,7 +108,7 @@ export default function NetworkPage() {
             <Panel
               eyebrow="Strongest single join"
               title={`${findings.strongestJoin.weight} shared terms`}
-              description="No other pair in the catalog overlaps this heavily. Shared vocabulary is a hint, not a promise: check that space, time and units line up before merging anything."
+              description="Shared vocabulary is a hint, not a promise: check space, time and units before merging."
             >
               <div className="space-y-2 text-sm">
                 <p className="font-medium leading-snug text-slate-900">{findings.strongestJoin.a}</p>
@@ -131,8 +131,8 @@ export default function NetworkPage() {
           {findings.orphans.length > 0 ? (
             <Panel
               eyebrow="Nothing links here"
-              title={`${findings.orphans.length} records sit alone`}
-              description="These share no theme or keyword with anything else catalogued. Either they genuinely stand apart, or their vocabulary needs bringing into line with the rest."
+              title={`${findings.orphans.length} record${findings.orphans.length === 1 ? '' : 's'} sit${findings.orphans.length === 1 ? 's' : ''} alone`}
+              description="No theme or keyword in common with anything else. Either they stand apart, or their vocabulary needs aligning."
             >
               <ul className="space-y-2">
                 {findings.orphans.map((o) => (

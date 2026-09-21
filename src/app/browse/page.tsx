@@ -18,7 +18,7 @@ export default function BrowsePage() {
       <PageHeader
         accent={sectionAccent('/browse')}
         title="Browse the catalog"
-        description={`All ${stats.datasets} datasets, sorted with the analysis-ready ones first. Search runs in your browser on dataset meaning, not just keywords, so "coral bleaching" finds thermal-stress records that never use the word.`}
+        description={`All ${stats.datasets} datasets, analysis-ready first. Search runs in your browser on meaning, so "coral bleaching" finds thermal-stress records that never use the word.`}
       />
       <BrowseView sources={sources} />
     </div>
