@@ -22,10 +22,10 @@ const DOMAIN_LABELS: Record<string, string> = {
 };
 
 const EXPLORE = [
-  { href: '/browse', title: 'Browse & search', body: 'Filter by domain, subbasin, access and readiness, or search by meaning.' },
-  { href: '/map', title: 'Where the data is', body: 'The basin, the places named in the records, and where coverage thins.' },
-  { href: '/timeline', title: 'Timeline', body: 'Every dataset end to end, and which years hold several kinds at once.' },
-  { href: '/coverage', title: 'Coverage gaps', body: 'Subbasin by theme, with every filled cell opening its datasets.' },
+  { href: '/browse', title: 'Browse & search', body: 'Filter, or search by meaning.' },
+  { href: '/map', title: 'Where the data is', body: 'Coverage across the basin.' },
+  { href: '/timeline', title: 'Timeline', body: 'Every dataset, end to end.' },
+  { href: '/coverage', title: 'Coverage gaps', body: 'Subbasin by theme.' },
 ];
 
 export default function HomePage() {
@@ -46,7 +46,7 @@ export default function HomePage() {
   const issueLeader = issues.themes[0];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Hero: the catalogue's case, in the plainest words available. */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-teal-900 px-6 py-10 text-white shadow-sm sm:px-10 sm:py-14">
         <OceanScene />
@@ -58,12 +58,11 @@ export default function HomePage() {
             {stats.datasets} Red Sea datasets. {stats.analysisReady} you can use today.
           </h1>
           <p className="mt-5 max-w-2xl text-sm leading-relaxed text-slate-200 sm:text-base">
-            One inventory across environment, reef ecology, fisheries production, nutrition and
-            socio-economics, {stats.earliestYear} to now, with every variable, steward, licence and
-            known limitation written down. This page is the honest state of it: what exists, what is
-            ready, and what it would take to use the rest.
+            Environment, reef ecology, fisheries, nutrition and socio-economics,{' '}
+            {stats.earliestYear} to now. Every variable, steward, licence and known limitation
+            written down.
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-6 flex flex-wrap gap-3">
             <Link
               href="/browse?quality=analysis-ready"
               className="rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
@@ -108,21 +107,21 @@ export default function HomePage() {
         <Figure
           label="Ready to analyse"
           value={`${stats.analysisReady}`}
-          hint={`${raw} still raw, ${cleaned} part-way. Cleaning is the bottleneck, not collection.`}
+          hint={`${raw} raw, ${cleaned} part-way. Cleaning is the bottleneck.`}
           href="/browse?quality=analysis-ready"
           accent={QUALITY_COLORS['analysis-ready']}
         />
         <Figure
           label="Openly licensed"
           value={`${stats.publicAccess}`}
-          hint={`${stats.datasets - stats.publicAccess} need a KAUST internal request first`}
+          hint={`${stats.datasets - stats.publicAccess} need a KAUST request first`}
           href="/browse?access=public"
           accent={ACCESS_COLORS.public}
         />
         <Figure
           label="Known issues logged"
           value={`${issues.total}`}
-          hint={`Across ${stats.datasets} records. ${stats.withDoi} carry a DOI; ${team.withoutEmail} have no steward contact.`}
+          hint={`${stats.withDoi} carry a DOI; ${team.withoutEmail} have no steward.`}
           accent="#b45309"
         />
       </div>
@@ -131,10 +130,10 @@ export default function HomePage() {
         <Panel
           eyebrow="Readiness"
           title="How usable each domain is"
-          description="Every record sits in one of three states. A domain is only as useful as the share of it you can open without processing first."
+          description="A domain is only as useful as the share you can open without processing first."
           action={{ href: '/browse', label: 'Filter' }}
           className="lg:col-span-3"
-          footnote="A dataset spanning two domains counts in both."
+          footnote="A dataset in two domains counts in both."
         >
           <ul className="space-y-4">
             {readiness.map((entry) => (
@@ -190,9 +189,9 @@ export default function HomePage() {
         <Panel
           eyebrow="The work ahead"
           title="What stands between raw and usable"
-          description="The known-issue notes, grouped by the kind of work each implies."
+          description="Known-issue notes, by the kind of work each implies."
           className="lg:col-span-2"
-          footnote="Grouped by reading the issue text, so an issue naming two problems counts twice. The notes themselves are a field in every record."
+          footnote="An issue naming two problems counts twice."
         >
           <ul className="space-y-3">
             {issues.themes.map((theme) => (
@@ -221,27 +220,27 @@ export default function HomePage() {
         <Panel
           eyebrow="Time"
           title="What can be studied, and when"
-          description="Bar height is how many datasets cover each year, teal where all five domains are present. Click a year to open its records."
+          description="Datasets covering each year, teal where all five domains are present. Click a year."
           action={{ href: '/timeline', label: 'Full timeline' }}
           className="lg:col-span-3"
           footnote={
             timeline.bestOverlap
-              ? `${timeline.bestOverlap.from}-${timeline.bestOverlap.to} is the longest stretch with all five domains present. Anything integrated has to live inside a window like that.`
+              ? `${timeline.bestOverlap.from}-${timeline.bestOverlap.to} is the longest run with all five domains present.`
               : undefined
           }
         >
-          <YearStrip years={timeline.years} height="h-28" />
+          <YearStrip years={timeline.years} height="h-44" />
         </Panel>
 
         <Panel
           eyebrow="Space"
           title="Where the work went"
-          description="Each record's stated extent, stacked. The darker the water, the more reach it."
+          description="Deeper water, more records reaching it."
           action={{ href: '/map', label: 'Open the map' }}
           className="lg:col-span-2"
           footnote={
             thin
-              ? `Thinnest stretch: ${thin.from.toFixed(1)}-${thin.to.toFixed(1)}°N, reached by ${thin.count} datasets against ${gradient.max} at the basin's widest.`
+              ? `Thinnest: ${thin.from.toFixed(1)}-${thin.to.toFixed(1)}°N, reached by ${thin.count} against ${gradient.max} at the widest.`
               : undefined
           }
         >
@@ -252,7 +251,7 @@ export default function HomePage() {
       <Panel
         eyebrow="Provenance"
         title="Most recently verified"
-        description="The records checked most recently against their files on DataWaha."
+        description="Checked most recently against their files."
         action={{ href: '/browse', label: 'All datasets' }}
       >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">

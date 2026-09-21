@@ -670,22 +670,23 @@ export default function BasinMap({
   if (!asked) {
     return (
       <div>
-        <figure className="m-0 overflow-hidden rounded-xl ring-1 ring-slate-900/10">{mapSvg}</figure>
+        <figure className="m-0 overflow-hidden rounded-xl ring-1 ring-slate-900/10">
+          {mapSvg}
+        </figure>
         <p className="mt-3 text-sm text-slate-500">
-          Drag a box on the map to see what data covers it. Only{' '}
-          {prints.filter((f) => f.local).length} of {prints.length} records describe a stretch
-          smaller than the basin, so the depth of colour is how many reach that water rather than
-          where anyone went.
+          Drag a box to see what covers it. Only {prints.filter((f) => f.local).length} of{' '}
+          {prints.length} records describe a stretch smaller than the basin, so depth of colour is
+          how many reach that water, not where anyone went.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+    <div>
       <figure className="m-0 overflow-hidden rounded-xl ring-1 ring-slate-900/10">{mapSvg}</figure>
 
-      <div className="flex flex-col self-start">
+      <div className="mt-4 flex flex-col">
         {inside.length > 0 ? (
           <div className="flex min-h-0 flex-1 flex-col">
             <div className="flex items-baseline justify-between gap-3">

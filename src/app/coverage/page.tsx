@@ -18,7 +18,7 @@ export default function CoveragePage() {
       <PageHeader
         accent={sectionAccent('/coverage')}
         title="Coverage gap matrix"
-        description="Rows are Red Sea subbasins, columns are the domain × theme combinations we track. Each cell shows the best data quality available for it, and opens the datasets behind it when clicked. A grey cell means nothing in the catalog answers that question yet."
+        description="Subbasins against the domain × theme pairs we track. A cell shows the best quality available and opens its datasets; grey means nothing answers that yet."
       />
       <p className="mb-5 inline-flex flex-wrap items-baseline gap-x-2 rounded-lg bg-white px-4 py-3 text-sm text-slate-600 shadow-sm ring-1 ring-slate-200">
         <span className="text-2xl font-semibold text-slate-900">{coverage.gaps}</span>

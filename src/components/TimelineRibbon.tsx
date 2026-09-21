@@ -80,7 +80,7 @@ export default function TimelineRibbon({ timeline }: { timeline: Timeline }) {
   const bars = visible.reduce((sum, g) => sum + g.rows.length, 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Figure
           label="All five domains"
@@ -112,7 +112,7 @@ export default function TimelineRibbon({ timeline }: { timeline: Timeline }) {
       <Panel
         eyebrow="Coverage"
         title="Datasets in play, year by year"
-        description="Height is datasets covering that year, teal where all five domains are present. Click a year to open its records."
+        description="Datasets covering each year, teal where all five domains are present. Click a year."
       >
         <YearStrip years={years} />
       </Panel>
@@ -120,8 +120,8 @@ export default function TimelineRibbon({ timeline }: { timeline: Timeline }) {
       <Panel
         eyebrow="Every dataset, end to end"
         title={shown === 43 ? 'All 43 records' : `${shown} of 43 records`}
-        description={`${bars} bars, first covered year to last. Solid is analysis-ready.`}
-        footnote="Triangle: still collecting. Hollow square: stopped over five years ago. Letter: D daily, M monthly, A annual, I irregular, 1 once."
+        description={`${bars} bars, first year to last. Solid is analysis-ready.`}
+        footnote="Triangle: collecting. Hollow square: stopped 5+ years ago. D daily, M monthly, A annual, I irregular, 1 once."
       >
         <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-2">
           <div className="flex overflow-hidden rounded-lg ring-1 ring-inset ring-slate-200">
