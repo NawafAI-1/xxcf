@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import land from '@/lib/basin-land.json';
 import type { Domain, Source } from '@/lib/types';
@@ -275,7 +275,7 @@ const LABELS: { name: string; lon: number; lat: number; onBright?: boolean }[] =
   { name: 'Red Sea', lon: 38.6, lat: 19.4, onBright: true },
   { name: 'Gulf of Aden', lon: 44.8, lat: 12.2 },
   { name: 'The Gulf', lon: 50.4, lat: 27.5 },
-  { name: 'Mediterranean', lon: 28.5, lat: 32.4 },
+  { name: 'Mediterranean', lon: 30.8, lat: 32.4 },
 ];
 
 /**
@@ -330,10 +330,22 @@ export default function BasinMap({
   // The box the reader has drawn on the map, and the one they are drawing now.
   const [selection, setSelection] = useState<View | null>(null);
   const [drag, setDrag] = useState<{ from: Point; to: Point } | null>(null);
+  const [tool, setTool] = useState<'move' | 'select'>('move');
+  const pan = useRef<{ lon: number; lat: number } | null>(null);
 
   const box = focus?.spatial.bbox as BBox | undefined;
   const focusGlobal = box ? isGlobalScale(box) : false;
-  const view = box && !focusGlobal ? viewFor(box) : frameFor(sources);
+  const home = useMemo(
+    () => (box && !focusGlobal ? viewFor(box) : frameFor(sources)),
+    [box, focusGlobal, sources]
+  );
+  // The frame the reader is looking at. It starts on the work and can be
+  // walked out to the neighbouring coasts, as far as the shipped coastline
+  // goes. Panning moves the frame itself rather than transforming the
+  // drawing, so the coastline, the names and the shading all redraw for
+  // wherever you end up.
+  const [moved, setMoved] = useState<View | null>(null);
+  const view = moved ?? home;
   const { width, height, x, y } = projector(view);
   // Sizes are in map units, so they have to be a fraction of the frame rather
   // than fixed: at a frame this wide, an 11-unit label renders at two pixels.
@@ -375,7 +387,8 @@ export default function BasinMap({
           f.north >= asked.south
       )
     : [];
-  const insideMix = domainMix(inside.map((f) => f.source));
+  const shown = asked ? inside : prints;
+  const shownMix = domainMix(shown.map((f) => f.source));
   const insideSites = asked
     ? sites.filter(
         ({ site }) =>
@@ -385,6 +398,39 @@ export default function BasinMap({
           site.lat <= asked.north
       )
     : [];
+
+  /** Shift the frame, keeping its size and staying inside the shipped coast. */
+  function panBy(dLon: number, dLat: number) {
+    const lonSpan = view.east - view.west;
+    const latSpan = view.north - view.south;
+    const west = clamp(view.west + dLon, DATA_LIMITS.west, DATA_LIMITS.east - lonSpan);
+    const south = clamp(view.south + dLat, DATA_LIMITS.south, DATA_LIMITS.north - latSpan);
+    setMoved({ west, east: west + lonSpan, south, north: south + latSpan });
+  }
+
+  /** Scale the frame about its centre, keeping its shape. */
+  function zoomBy(factor: number) {
+    const lonSpan = view.east - view.west;
+    const latSpan = view.north - view.south;
+    const limitLon = DATA_LIMITS.east - DATA_LIMITS.west;
+    const limitLat = DATA_LIMITS.north - DATA_LIMITS.south;
+    const capped = Math.min(
+      factor,
+      limitLon / lonSpan,
+      limitLat / latSpan,
+      // Below about two degrees the shipped coastline has no more detail to
+      // give, so there is nothing to gain by going closer.
+      lonSpan > 2.5 || factor > 1 ? Infinity : 1
+    );
+    const scale = Math.max(capped, 2.5 / lonSpan);
+    const midLon = (view.west + view.east) / 2;
+    const midLat = (view.south + view.north) / 2;
+    const halfLon = (lonSpan * scale) / 2;
+    const halfLat = (latSpan * scale) / 2;
+    const west = clamp(midLon - halfLon, DATA_LIMITS.west, DATA_LIMITS.east - halfLon * 2);
+    const south = clamp(midLat - halfLat, DATA_LIMITS.south, DATA_LIMITS.north - halfLat * 2);
+    setMoved({ west, east: west + halfLon * 2, south, north: south + halfLat * 2 });
+  }
 
   /** Where on the sea the pointer is, in degrees. */
   function pointAt(event: React.PointerEvent<SVGRectElement>): Point {
@@ -632,17 +678,28 @@ export default function BasinMap({
           width={width}
           height={height}
           fill="transparent"
-          className="cursor-crosshair"
+          className={tool === 'move' ? 'cursor-grab active:cursor-grabbing' : 'cursor-crosshair'}
           onPointerDown={(event) => {
             event.currentTarget.setPointerCapture(event.pointerId);
             const from = pointAt(event);
-            setDrag({ from, to: from });
+            if (tool === 'move') pan.current = from;
+            else setDrag({ from, to: from });
           }}
           onPointerMove={(event) => {
+            if (tool === 'move') {
+              const start = pan.current;
+              if (!start) return;
+              // The grabbed point stays under the pointer, so the map follows
+              // the hand rather than drifting away from it.
+              const now = pointAt(event);
+              panBy(start.lon - now.lon, start.lat - now.lat);
+              return;
+            }
             if (!drag) return;
             setDrag({ from: drag.from, to: pointAt(event) });
           }}
           onPointerUp={(event) => {
+            pan.current = null;
             if (!drag) return;
             const box = boxOf(drag.from, pointAt(event));
             setDrag(null);
@@ -659,7 +716,10 @@ export default function BasinMap({
                 : box
             );
           }}
-          onPointerCancel={() => setDrag(null)}
+          onPointerCancel={() => {
+            pan.current = null;
+            setDrag(null);
+          }}
         />
       ) : null}
     </svg>
@@ -667,49 +727,99 @@ export default function BasinMap({
 
   if (!interactive) return <figure className="m-0">{mapSvg}</figure>;
 
-  if (!asked) {
-    return (
+  return (
+    <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
       <div>
-        <figure className="m-0 overflow-hidden rounded-xl ring-1 ring-slate-900/10">
-          {mapSvg}
-        </figure>
-        <p className="mt-3 text-sm text-slate-500">
-          Drag a box to see what covers it. Only {prints.filter((f) => f.local).length} of{' '}
-          {prints.length} records describe a stretch smaller than the basin, so depth of colour is
-          how many reach that water, not where anyone went.
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          <div className="flex overflow-hidden rounded-lg ring-1 ring-inset ring-slate-200">
+            {(['move', 'select'] as const).map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setTool(option)}
+                className={`px-2.5 py-1 text-xs font-medium capitalize transition ${
+                  tool === option
+                    ? 'bg-slate-800 text-white'
+                    : 'bg-white text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                {option === 'move' ? 'Move' : 'Select box'}
+              </button>
+            ))}
+          </div>
+          <div className="flex overflow-hidden rounded-lg ring-1 ring-inset ring-slate-200">
+            <button
+              type="button"
+              onClick={() => zoomBy(1 / 1.35)}
+              aria-label="Zoom in"
+              className="px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+            >
+              +
+            </button>
+            <button
+              type="button"
+              onClick={() => zoomBy(1.35)}
+              aria-label="Zoom out"
+              className="px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+            >
+              &minus;
+            </button>
+          </div>
+          {moved ? (
+            <button
+              type="button"
+              onClick={() => setMoved(null)}
+              className="text-xs text-slate-500 transition hover:text-slate-800"
+            >
+              Back to the basin
+            </button>
+          ) : null}
+        </div>
+
+        <figure className="m-0 overflow-hidden rounded-xl ring-1 ring-slate-900/10">{mapSvg}</figure>
+        <p className="mt-3 text-xs leading-snug text-slate-500">
+          {tool === 'move' ? 'Drag to move around the coast, or switch to Select box to narrow the list.' : 'Drag a box to narrow the list.'}{' '}
+          Only {prints.filter((f) => f.local).length} of {prints.length} records describe a stretch
+          smaller than the basin, so depth of colour is how many reach that water, not where anyone
+          went.
         </p>
       </div>
-    );
-  }
 
-  return (
-    <div>
-      <figure className="m-0 overflow-hidden rounded-xl ring-1 ring-slate-900/10">{mapSvg}</figure>
-
-      <div className="mt-4 flex flex-col">
-        {inside.length > 0 ? (
+      <div className="flex flex-col">
+        {shown.length > 0 ? (
           <div className="flex min-h-0 flex-1 flex-col">
             <div className="flex items-baseline justify-between gap-3">
               <p className="text-sm font-semibold text-slate-900">
-                {inside.length} dataset{inside.length === 1 ? '' : 's'} here
+                {shown.length} dataset{shown.length === 1 ? '' : 's'}
+                {asked ? ' here' : ' over the basin'}
               </p>
-              <button
-                type="button"
-                onClick={() => setSelection(null)}
-                className="text-xs text-slate-400 transition hover:text-slate-700"
-              >
-                Clear
-              </button>
+              {asked ? (
+                <button
+                  type="button"
+                  onClick={() => setSelection(null)}
+                  className="text-xs text-slate-400 transition hover:text-slate-700"
+                >
+                  Clear
+                </button>
+              ) : null}
             </div>
-            <p className="mt-0.5 text-xs tabular-nums text-slate-500">
-              {asked.south.toFixed(1)}&ndash;{asked.north.toFixed(1)}&deg;N,{' '}
-              {asked.west.toFixed(1)}&ndash;{asked.east.toFixed(1)}&deg;E
-            </p>
+            {asked ? (
+              <p className="mt-0.5 text-xs tabular-nums text-slate-500">
+                {asked.south.toFixed(1)}&ndash;{asked.north.toFixed(1)}&deg;N,{' '}
+                {asked.west.toFixed(1)}&ndash;{asked.east.toFixed(1)}&deg;E
+              </p>
+            ) : (
+              <p className="mt-0.5 text-xs text-slate-500">
+                {tool === 'select'
+                  ? 'Drag a box on the map to narrow this.'
+                  : 'Switch to Select box to narrow this to one stretch.'}
+              </p>
+            )}
 
             {/* What kind of data, before which records: the mix is the answer
                 to "what is here", the list is the detail under it. */}
             <ul className="mt-3 space-y-1.5">
-              {insideMix.map((entry) => (
+              {shownMix.map((entry) => (
                 <li key={entry.domain} className="flex items-center gap-2 text-xs">
                   <span
                     className="h-2.5 w-2.5 shrink-0 rounded-full"
@@ -723,7 +833,7 @@ export default function BasinMap({
                     <span
                       className="block h-full rounded-full"
                       style={{
-                        width: `${(entry.count / insideMix[0].count) * 100}%`,
+                        width: `${(entry.count / shownMix[0].count) * 100}%`,
                         backgroundColor: DOMAIN_COLORS[entry.domain],
                       }}
                     />
@@ -741,8 +851,8 @@ export default function BasinMap({
               </p>
             ) : null}
 
-            <ul className="mt-3 max-h-64 space-y-1.5 overflow-y-auto border-t border-slate-100 pr-1 pt-3">
-              {inside.map(({ source, local }) => (
+            <ul className="mt-3 max-h-[19rem] space-y-1.5 overflow-y-auto border-t border-slate-100 pr-1 pt-3">
+              {shown.map(({ source, local }) => (
                 <li key={source.id}>
                   <Link
                     href={`/sources/${source.id}`}
@@ -767,7 +877,7 @@ export default function BasinMap({
             </ul>
 
             <Link
-              href={`/browse?id=${inside.map((f) => f.source.id).join(',')}`}
+              href={`/browse?id=${shown.map((f) => f.source.id).join(',')}`}
               className="mt-3 inline-block text-xs font-medium text-teal-700 hover:underline"
             >
               Filter browse to these &rarr;
