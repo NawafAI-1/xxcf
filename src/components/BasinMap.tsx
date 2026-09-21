@@ -59,6 +59,48 @@ const DATA_LIMITS: View = (land as { region?: View }).region ?? {
   north: 34,
 };
 
+/**
+ * The domains present in a set of records, with how many each accounts for.
+ * A record in two domains counts in both, so the parts sum past the total.
+ */
+function domainMix(sources: Source[]): { domain: Domain; count: number }[] {
+  const counts = new Map<Domain, number>();
+  for (const source of sources) {
+    for (const domain of source.domain) counts.set(domain, (counts.get(domain) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([domain, count]) => ({ domain, count }))
+    .sort((a, b) => b.count - a.count || a.domain.localeCompare(b.domain));
+}
+
+const DOMAIN_LABELS: Record<Domain, string> = {
+  environmental: 'Environmental',
+  ecological: 'Ecological',
+  production: 'Production',
+  'nutrition-health': 'Nutrition & health',
+  'socio-economic': 'Socio-economic',
+};
+
+interface Point {
+  lon: number;
+  lat: number;
+}
+
+/** The box two corners describe, whichever way round they were drawn. */
+function boxOf(a: Point, b: Point): View {
+  return {
+    west: Math.min(a.lon, b.lon),
+    east: Math.max(a.lon, b.lon),
+    south: Math.min(a.lat, b.lat),
+    north: Math.max(a.lat, b.lat),
+  };
+}
+
+/** Degrees across, for telling a click apart from a drawn box. */
+function boxSize(box: View): number {
+  return Math.max(box.east - box.west, box.north - box.south);
+}
+
 /** A record wider than this covers several seas and does not frame anything. */
 const SINGLE_SEA = 30;
 /** Degrees of coast to keep around the work, so the frame is a map. */
@@ -230,9 +272,9 @@ export default function BasinMap({
   showCoverage = false,
   interactive = false,
 }: BasinMapProps) {
-  // The latitude the reader is pointing at, and whether they have pinned it.
-  const [scrubLat, setScrubLat] = useState<number | null>(null);
-  const [pinned, setPinned] = useState(false);
+  // The box the reader has drawn on the map, and the one they are drawing now.
+  const [selection, setSelection] = useState<View | null>(null);
+  const [drag, setDrag] = useState<{ from: Point; to: Point } | null>(null);
 
   const box = focus?.spatial.bbox as BBox | undefined;
   const focusGlobal = box ? isGlobalScale(box) : false;
@@ -254,15 +296,36 @@ export default function BasinMap({
 
   const thin = showCoverage && !focus ? thinStretch(sources) : null;
 
-  const reaching = scrubLat === null
-    ? []
-    : prints.filter((f) => f.south <= scrubLat && f.north >= scrubLat);
+  // What is being shown: the finished box, or the one under the pointer.
+  const live = drag ? boxOf(drag.from, drag.to) : null;
+  const asked = live ?? selection;
+  const inside = asked
+    ? prints.filter(
+        (f) =>
+          f.west <= asked.east &&
+          f.east >= asked.west &&
+          f.south <= asked.north &&
+          f.north >= asked.south
+      )
+    : [];
+  const insideMix = domainMix(inside.map((f) => f.source));
+  const insideSites = asked
+    ? sites.filter(
+        ({ site }) =>
+          site.lon >= asked.west &&
+          site.lon <= asked.east &&
+          site.lat >= asked.south &&
+          site.lat <= asked.north
+      )
+    : [];
 
-  /** Latitude under the pointer, from the event's position in the frame. */
-  function latAt(event: React.MouseEvent<SVGRectElement>) {
+  /** Where on the sea the pointer is, in degrees. */
+  function pointAt(event: React.PointerEvent<SVGRectElement>): Point {
     const rect = event.currentTarget.getBoundingClientRect();
-    const ratio = (event.clientY - rect.top) / rect.height;
-    return view.north - ratio * (view.north - view.south);
+    return {
+      lon: view.west + ((event.clientX - rect.left) / rect.width) * (view.east - view.west),
+      lat: view.north - ((event.clientY - rect.top) / rect.height) * (view.north - view.south),
+    };
   }
 
   const mapSvg = (
@@ -431,7 +494,12 @@ export default function BasinMap({
           water brightens where many reach and stays dark where few do. */}
       <g mask="url(#seaOnly)">
         {prints.map((print) => {
-          const lit = scrubLat !== null && print.south <= scrubLat && print.north >= scrubLat;
+          const lit =
+            asked !== null &&
+            print.west <= asked.east &&
+            print.east >= asked.west &&
+            print.south <= asked.north &&
+            print.north >= asked.south;
           return (
             <rect
               key={print.source.id}
@@ -440,7 +508,7 @@ export default function BasinMap({
               width={Math.max(x(print.east) - x(print.west), u * 0.3)}
               height={Math.max(y(print.south) - y(print.north), u * 0.3)}
               fill="#334e68"
-              fillOpacity={scrubLat === null ? 0.055 : lit ? 0.08 : 0.012}
+              fillOpacity={asked === null ? 0.055 : lit ? 0.08 : 0.012}
             />
           );
         })}
@@ -521,40 +589,45 @@ export default function BasinMap({
         })()}
       </g>
 
-      {/* Reading across a latitude is the question this map can answer well:
-          what reaches this water? The line follows the pointer, and a click
-          pins it so the list beside the map can be used. */}
-      {interactive && scrubLat !== null ? (
+      {/* Draw a box and the panel says what is in it. The records mostly give
+          basin-wide extents, so "what covers this water" is the question the
+          map can answer honestly; a box asks it of an area rather than a line. */}
+      {interactive && asked ? (
         <g pointerEvents="none">
-          <line
-            x1={0}
-            y1={y(scrubLat)}
-            x2={width}
-            y2={y(scrubLat)}
-            stroke="#0f172a"
-            strokeOpacity={pinned ? 0.75 : 0.4}
-            strokeWidth={u * 0.16}
-            strokeDasharray={pinned ? undefined : `${u * 0.9} ${u * 0.6}`}
-          />
           <rect
-            x={width - u * 17}
-            y={y(scrubLat) - u * 2.4}
-            width={u * 15.6}
-            height={u * 2.6}
-            rx={u * 0.5}
+            x={x(asked.west)}
+            y={y(asked.north)}
+            width={Math.max(x(asked.east) - x(asked.west), 1)}
+            height={Math.max(y(asked.south) - y(asked.north), 1)}
             fill="#0f172a"
-            fillOpacity={0.92}
+            fillOpacity={0.06}
+            stroke="#0f172a"
+            strokeOpacity={0.7}
+            strokeWidth={u * 0.16}
+            strokeDasharray={drag ? `${u * 0.8} ${u * 0.5}` : undefined}
           />
-          <text
-            x={width - u * 1.9}
-            y={y(scrubLat) - u * 0.6}
-            textAnchor="end"
-            fontSize={u * 1.6}
-            fontWeight="600"
-            fill="#e2e8f0"
-          >
-            {`${scrubLat.toFixed(1)}\u00b0N \u00b7 ${reaching.length} datasets`}
-          </text>
+          {boxSize(asked) > 0.4 ? (
+            <>
+              <rect
+                x={x(asked.west)}
+                y={y(asked.north) - u * 2.5}
+                width={u * (5.2 + String(inside.length).length * 0.95)}
+                height={u * 2.3}
+                rx={u * 0.4}
+                fill="#0f172a"
+                fillOpacity={0.9}
+              />
+              <text
+                x={x(asked.west) + u * 0.8}
+                y={y(asked.north) - u * 0.9}
+                fontSize={u * 1.5}
+                fontWeight="600"
+                fill="#f8fafc"
+              >
+                {`${inside.length} here`}
+              </text>
+            </>
+          ) : null}
         </g>
       ) : null}
 
@@ -564,21 +637,33 @@ export default function BasinMap({
           height={height}
           fill="transparent"
           className="cursor-crosshair"
-          onMouseMove={(event) => {
-            if (!pinned) setScrubLat(latAt(event));
+          onPointerDown={(event) => {
+            event.currentTarget.setPointerCapture(event.pointerId);
+            const from = pointAt(event);
+            setDrag({ from, to: from });
           }}
-          onMouseLeave={() => {
-            if (!pinned) setScrubLat(null);
+          onPointerMove={(event) => {
+            if (!drag) return;
+            setDrag({ from: drag.from, to: pointAt(event) });
           }}
-          onClick={(event) => {
-            if (pinned) {
-              setPinned(false);
-              setScrubLat(latAt(event));
-            } else {
-              setScrubLat(latAt(event));
-              setPinned(true);
-            }
+          onPointerUp={(event) => {
+            if (!drag) return;
+            const box = boxOf(drag.from, pointAt(event));
+            setDrag(null);
+            // A click is a box with no size. Treat it as a small square around
+            // the point rather than a selection that can hold nothing.
+            setSelection(
+              boxSize(box) < 0.25
+                ? {
+                    west: box.west - 0.35,
+                    east: box.east + 0.35,
+                    south: box.south - 0.35,
+                    north: box.north + 0.35,
+                  }
+                : box
+            );
           }}
+          onPointerCancel={() => setDrag(null)}
         />
       ) : null}
     </svg>
@@ -591,29 +676,62 @@ export default function BasinMap({
       <figure className="m-0 overflow-hidden rounded-xl ring-1 ring-slate-900/10">{mapSvg}</figure>
 
       <div className="flex flex-col">
-        {scrubLat !== null && reaching.length > 0 ? (
+        {asked && inside.length > 0 ? (
           <div className="flex min-h-0 flex-1 flex-col">
             <div className="flex items-baseline justify-between gap-3">
-              <p className="text-sm font-semibold tabular-nums text-slate-900">
-                {scrubLat.toFixed(1)}&deg;N
+              <p className="text-sm font-semibold text-slate-900">
+                {inside.length} dataset{inside.length === 1 ? '' : 's'} here
               </p>
               <button
                 type="button"
-                onClick={() => {
-                  setPinned(false);
-                  setScrubLat(null);
-                }}
+                onClick={() => setSelection(null)}
                 className="text-xs text-slate-400 transition hover:text-slate-700"
               >
-                {pinned ? 'Unpin' : 'Clear'}
+                Clear
               </button>
             </div>
-            <p className="mt-0.5 text-xs text-slate-500">
-              {reaching.length} of {prints.length} records reach this water
-              {pinned ? '' : '. Click the map to hold it.'}
+            <p className="mt-0.5 text-xs tabular-nums text-slate-500">
+              {asked.south.toFixed(1)}&ndash;{asked.north.toFixed(1)}&deg;N,{' '}
+              {asked.west.toFixed(1)}&ndash;{asked.east.toFixed(1)}&deg;E
             </p>
-            <ul className="mt-3 max-h-[26rem] space-y-1.5 overflow-y-auto pr-1">
-              {reaching.map(({ source, local }) => (
+
+            {/* What kind of data, before which records: the mix is the answer
+                to "what is here", the list is the detail under it. */}
+            <ul className="mt-3 space-y-1.5">
+              {insideMix.map((entry) => (
+                <li key={entry.domain} className="flex items-center gap-2 text-xs">
+                  <span
+                    className="h-2.5 w-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: DOMAIN_COLORS[entry.domain] }}
+                    aria-hidden
+                  />
+                  <span className="w-32 shrink-0 text-slate-700">
+                    {DOMAIN_LABELS[entry.domain]}
+                  </span>
+                  <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100">
+                    <span
+                      className="block h-full rounded-full"
+                      style={{
+                        width: `${(entry.count / insideMix[0].count) * 100}%`,
+                        backgroundColor: DOMAIN_COLORS[entry.domain],
+                      }}
+                    />
+                  </span>
+                  <span className="w-4 shrink-0 text-right font-semibold tabular-nums text-slate-900">
+                    {entry.count}
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            {insideSites.length > 0 ? (
+              <p className="mt-3 text-xs text-slate-500">
+                Field sites named here: {insideSites.map(({ site }) => site.name).join(', ')}.
+              </p>
+            ) : null}
+
+            <ul className="mt-3 max-h-64 space-y-1.5 overflow-y-auto border-t border-slate-100 pr-1 pt-3">
+              {inside.map(({ source, local }) => (
                 <li key={source.id}>
                   <Link
                     href={`/sources/${source.id}`}
@@ -627,7 +745,7 @@ export default function BasinMap({
                     <span>
                       {source.title}
                       {local ? (
-                        <span className="ml-1.5 rounded bg-teal-50 px-1 py-px text-[10px] font-medium text-teal-800">
+                        <span className="ml-1.5 rounded bg-slate-100 px-1 py-px text-[10px] font-medium text-slate-600">
                           local
                         </span>
                       ) : null}
@@ -636,16 +754,28 @@ export default function BasinMap({
                 </li>
               ))}
             </ul>
+
             <Link
-              href={`/browse?id=${reaching.map((f) => f.source.id).join(',')}`}
+              href={`/browse?id=${inside.map((f) => f.source.id).join(',')}`}
               className="mt-3 inline-block text-xs font-medium text-teal-700 hover:underline"
             >
               Filter browse to these &rarr;
             </Link>
           </div>
+        ) : asked ? (
+          <div className="flex flex-1 flex-col justify-center rounded-xl border border-dashed border-slate-300 p-5 text-sm text-slate-500">
+            <p>No record reaches this box.</p>
+            <button
+              type="button"
+              onClick={() => setSelection(null)}
+              className="mt-2 self-start text-xs font-medium text-teal-700 hover:underline"
+            >
+              Clear
+            </button>
+          </div>
         ) : (
           <div className="flex flex-1 flex-col justify-center rounded-xl border border-dashed border-slate-300 p-5 text-sm text-slate-500">
-            <p>Point anywhere on the sea to see what reaches that water.</p>
+            <p>Drag a box on the map to see what data covers it.</p>
             <p className="mt-3 text-xs leading-relaxed">
               Each shaded rectangle is one record&rsquo;s stated extent. Only{' '}
               {prints.filter((f) => f.local).length} of {prints.length} describe a stretch smaller
