@@ -50,12 +50,14 @@ const clamp = (value: number, low: number, high: number) => Math.min(Math.max(va
  * scripts/build-basin-geometry.mjs, which reads it off the catalogue, so the
  * map can only be asked to show coast that is already in the bundle.
  */
-const DATA_LIMITS: View = (land as { region?: View }).region ?? {
-  west: 22,
-  east: 54,
-  south: 3,
-  north: 34,
+const DATA_LIMITS: View = (land as { world?: View }).world ?? {
+  west: -180,
+  east: 180,
+  south: -85,
+  north: 85,
 };
+/** Where the catalogue's work is, and where the detailed coastline exists. */
+const DETAIL_REGION: View = (land as { region?: View }).region ?? DATA_LIMITS;
 
 /**
  * The domains present in a set of records, with how many each accounts for.
@@ -191,12 +193,12 @@ function frameFor(sources: Source[]): View {
     north = Math.max(north, n);
   }
 
-  if (!Number.isFinite(west)) return DATA_LIMITS;
+  if (!Number.isFinite(west)) return DETAIL_REGION;
   return {
-    west: clamp(west - FRAME_MARGIN, DATA_LIMITS.west, DATA_LIMITS.east),
-    east: clamp(east + FRAME_MARGIN, DATA_LIMITS.west, DATA_LIMITS.east),
-    south: clamp(south - FRAME_MARGIN, DATA_LIMITS.south, DATA_LIMITS.north),
-    north: clamp(north + FRAME_MARGIN, DATA_LIMITS.south, DATA_LIMITS.north),
+    west: clamp(west - FRAME_MARGIN, DETAIL_REGION.west, DETAIL_REGION.east),
+    east: clamp(east + FRAME_MARGIN, DETAIL_REGION.west, DETAIL_REGION.east),
+    south: clamp(south - FRAME_MARGIN, DETAIL_REGION.south, DETAIL_REGION.north),
+    north: clamp(north + FRAME_MARGIN, DETAIL_REGION.south, DETAIL_REGION.north),
   };
 }
 const SCALE = 60; // svg units per degree of latitude
@@ -254,9 +256,35 @@ function featurePath(geometry: LandGeometry, p: Project): string {
   return polygons.map((rings) => rings.map((ring) => ringPath(ring, p)).join('')).join('');
 }
 
+interface LandFeature {
+  properties: { name: string; color?: number };
+  geometry: LandGeometry;
+}
+
 const LAND = land as unknown as {
-  features: { properties: { name: string }; geometry: LandGeometry }[];
+  /** The catalogue's own neighbourhood at 50m. */
+  features: LandFeature[];
+  /** The whole globe at 110m, for frames wider than that neighbourhood. */
+  coarse: LandFeature[];
+  region: View;
+  world: View;
 };
+
+/**
+ * A political palette, one colour per country, assigned at build time so no
+ * two that touch share one. Land used to be a single tone, which read as one
+ * undifferentiated mass once the frame could be walked past the basin.
+ */
+const COUNTRY_COLORS = [
+  '#f3b0ab',
+  '#f7d99b',
+  '#b3d8a8',
+  '#cdd394',
+  '#f4c194',
+  '#c6bbdf',
+  '#a8d4d8',
+  '#eabdcd',
+];
 
 /** Place names worth carrying, with the anchor inside their own territory. */
 const PLACES: { name: string; lon: number; lat: number }[] = [
@@ -350,6 +378,18 @@ export default function BasinMap({
   // Sizes are in map units, so they have to be a fraction of the frame rather
   // than fixed: at a frame this wide, an 11-unit label renders at two pixels.
   const u = width / 100;
+  // The detailed coastline only exists over the catalogue's neighbourhood, and
+  // at a frame much wider than that its extra vertices are invisible anyway.
+  const inDetail =
+    view.west >= DETAIL_REGION.west - 0.01 &&
+    view.east <= DETAIL_REGION.east + 0.01 &&
+    view.south >= DETAIL_REGION.south - 0.01 &&
+    view.north <= DETAIL_REGION.north + 0.01;
+  const landFeatures = inDetail ? LAND.features : LAND.coarse;
+  // The basin's own names are only meaningful while the frame is near it. Held
+  // on once it has been walked out to the continent they pile into a knot over
+  // the Red Sea and say nothing about what is on screen.
+  const nearBasin = view.east - view.west < (DETAIL_REGION.east - DETAIL_REGION.west) * 1.7;
 
   const prints = useMemo(
     () => (focus ? [] : footprints(sources, view)),
@@ -463,7 +503,7 @@ export default function BasinMap({
         </linearGradient>
         <mask id="seaOnly">
           <rect width={width} height={height} fill="#ffffff" />
-          {LAND.features.map((feature) => (
+          {landFeatures.map((feature) => (
             <path
               key={`mask-${feature.properties.name}`}
               d={featurePath(feature.geometry, { width, height, x, y })}
@@ -490,19 +530,22 @@ export default function BasinMap({
       </g>
 
       <g>
-        {LAND.features.map((feature) => (
+        {landFeatures.map((feature) => (
           <path
             key={feature.properties.name}
             d={featurePath(feature.geometry, { width, height, x, y })}
-            fill="url(#darkLand)"
-            stroke="#cbd5e1"
-            strokeWidth={u * 0.13}
-          />
+            fill={COUNTRY_COLORS[(feature.properties.color ?? 0) % COUNTRY_COLORS.length]}
+            fillOpacity={0.8}
+            stroke="#ffffff"
+            strokeWidth={u * 0.16}
+          >
+            <title>{feature.properties.name}</title>
+          </path>
         ))}
       </g>
 
-      {!compact && (
-        <g fill="#a9b4bf" fontSize={u * 1.8} letterSpacing={u * 0.16} fontWeight="600">
+      {!compact && nearBasin && (
+        <g fill="#5b6470" fontSize={u * 1.8} letterSpacing={u * 0.16} fontWeight="600" stroke="#ffffff" strokeWidth={u * 0.45} paintOrder="stroke">
           {PLACES.filter(
             (p) => p.lon > view.west && p.lon < view.east && p.lat > view.south && p.lat < view.north
           ).map((place) => (
@@ -562,7 +605,7 @@ export default function BasinMap({
       </g>
 
       <g fontSize={u * 2} fontStyle="italic" paintOrder="stroke" strokeWidth={u * 0.5}>
-        {LABELS.filter(
+        {(nearBasin ? LABELS : []).filter(
           (l) => l.lon > view.west && l.lon < view.east && l.lat > view.south && l.lat < view.north
         ).map((label) => (
           <text
@@ -584,7 +627,7 @@ export default function BasinMap({
         {(() => {
           const placed: { px: number; py: number }[] = [];
           const midLon = (view.west + view.east) / 2;
-          return [...sites]
+          return (nearBasin ? [...sites] : [])
             .sort((a, b) => b.site.lat - a.site.lat)
             .map(({ site, sources: named }) => {
               const px = x(site.lon);
@@ -703,18 +746,9 @@ export default function BasinMap({
             if (!drag) return;
             const box = boxOf(drag.from, pointAt(event));
             setDrag(null);
-            // A click is a box with no size. Treat it as a small square around
-            // the point rather than a selection that can hold nothing.
-            setSelection(
-              boxSize(box) < 0.25
-                ? {
-                    west: box.west - 0.35,
-                    east: box.east + 0.35,
-                    south: box.south - 0.35,
-                    north: box.north + 0.35,
-                  }
-                : box
-            );
+            // A click is a box with no size, so it clears the one already
+            // drawn rather than selecting a point nobody aimed at.
+            setSelection(boxSize(box) < 0.25 ? null : box);
           }}
           onPointerCancel={() => {
             pan.current = null;
