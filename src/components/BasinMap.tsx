@@ -257,7 +257,14 @@ function featurePath(geometry: LandGeometry, p: Project): string {
 }
 
 interface LandFeature {
-  properties: { name: string; color?: number };
+  properties: {
+    name: string;
+    color?: number;
+    /** Where the name goes, from the centroid of the country's largest ring. */
+    at?: [number, number];
+    /** That ring's area in square degrees, for deciding what there is room for. */
+    area?: number;
+  };
   geometry: LandGeometry;
 }
 
@@ -286,16 +293,57 @@ const COUNTRY_COLORS = [
   '#eabdcd',
 ];
 
-/** Place names worth carrying, with the anchor inside their own territory. */
-const PLACES: { name: string; lon: number; lat: number }[] = [
-  { name: 'EGYPT', lon: 29.5, lat: 26.5 },
-  { name: 'SAUDI ARABIA', lon: 45.0, lat: 23.5 },
-  { name: 'SUDAN', lon: 29.5, lat: 15.5 },
-  { name: 'ERITREA', lon: 38.3, lat: 15.4 },
-  { name: 'ETHIOPIA', lon: 39.5, lat: 8.5 },
-  { name: 'YEMEN', lon: 46.5, lat: 15.5 },
-  { name: 'JORDAN', lon: 36.6, lat: 31.2 },
-];
+/**
+ * Which country names fit on the frame, biggest first.
+ *
+ * A country is only named while there is room for the word inside its own
+ * territory, and only if no name already placed is sitting where this one
+ * would go. Taking them in order of size means that when the frame is full it
+ * is the small countries that go unnamed, which is how an atlas reads.
+ */
+function countryLabels(
+  features: LandFeature[],
+  view: View,
+  project: Project,
+  unit: number
+): { name: string; x: number; y: number; size: number }[] {
+  const viewArea = (view.east - view.west) * (view.north - view.south);
+  const placed: { x: number; y: number; halfWidth: number; halfHeight: number }[] = [];
+  const out: { name: string; x: number; y: number; size: number }[] = [];
+
+  const candidates = features
+    .filter((f) => {
+      const at = f.properties.at;
+      if (!at) return false;
+      return at[0] > view.west && at[0] < view.east && at[1] > view.south && at[1] < view.north;
+    })
+    .sort((a, b) => (b.properties.area ?? 0) - (a.properties.area ?? 0));
+
+  for (const country of candidates) {
+    const [lon, lat] = country.properties.at!;
+    const share = (country.properties.area ?? 0) / viewArea;
+    // Below a thousandth of the frame a country is a speck, and its name would
+    // be a word floating over its neighbours.
+    if (share < 0.001) continue;
+
+    const size = unit * (share > 0.06 ? 2 : share > 0.02 ? 1.7 : 1.45);
+    const text = country.properties.name.toUpperCase();
+    const halfWidth = (text.length * size * 0.62) / 2;
+    const halfHeight = size * 0.75;
+    const px = project.x(lon);
+    const py = project.y(lat);
+
+    const clash = placed.some(
+      (q) =>
+        Math.abs(q.x - px) < q.halfWidth + halfWidth && Math.abs(q.y - py) < q.halfHeight + halfHeight
+    );
+    if (clash) continue;
+
+    placed.push({ x: px, y: py, halfWidth, halfHeight });
+    out.push({ name: text, x: px, y: py, size });
+  }
+  return out;
+}
 
 const LABELS: { name: string; lon: number; lat: number; onBright?: boolean }[] = [
   // The Red Sea's name sits on the coverage stack, the darkest thing on an
@@ -390,6 +438,9 @@ export default function BasinMap({
   // on once it has been walked out to the continent they pile into a knot over
   // the Red Sea and say nothing about what is on screen.
   const nearBasin = view.east - view.west < (DETAIL_REGION.east - DETAIL_REGION.west) * 1.7;
+  const names = compact
+    ? []
+    : countryLabels(landFeatures, view, { width, height, x, y }, u);
 
   const prints = useMemo(
     () => (focus ? [] : footprints(sources, view)),
@@ -544,18 +595,6 @@ export default function BasinMap({
         ))}
       </g>
 
-      {!compact && nearBasin && (
-        <g fill="#5b6470" fontSize={u * 1.8} letterSpacing={u * 0.16} fontWeight="600" stroke="#ffffff" strokeWidth={u * 0.45} paintOrder="stroke">
-          {PLACES.filter(
-            (p) => p.lon > view.west && p.lon < view.east && p.lat > view.south && p.lat < view.north
-          ).map((place) => (
-            <text key={place.name} x={x(place.lon)} y={y(place.lat)} textAnchor="middle">
-              {place.name}
-            </text>
-          ))}
-        </g>
-      )}
-
       {/* One record's footprint, clipped to the sea. A bounding box drawn whole
           covers two countries and claims a reach over land that no marine
           dataset has; masking the land out shows the water it is about. */}
@@ -601,6 +640,23 @@ export default function BasinMap({
           >
             <title>{`${cell.count} dataset${cell.count === 1 ? '' : 's'} reach here`}</title>
           </rect>
+        ))}
+      </g>
+
+      <g fontWeight="600" letterSpacing={u * 0.12} paintOrder="stroke">
+        {names.map((label) => (
+          <text
+            key={label.name}
+            x={label.x}
+            y={label.y}
+            textAnchor="middle"
+            fontSize={label.size}
+            fill="#57616d"
+            stroke="#ffffff"
+            strokeWidth={label.size * 0.28}
+          >
+            {label.name}
+          </text>
         ))}
       </g>
 

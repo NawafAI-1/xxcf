@@ -177,6 +177,42 @@ function extract(topologyFile, region, precision, minArea) {
   return features;
 }
 
+/**
+ * Where to write a country's name, and how much of it there is to write on.
+ *
+ * The anchor is the centroid of the country's largest ring, which lands inside
+ * the shape for all but the most horseshoe-like countries, and the area lets
+ * the map decide which names it has room for before it runs out.
+ */
+function labelAnchor(feature) {
+  const polygons =
+    feature.geometry.type === 'Polygon'
+      ? [feature.geometry.coordinates]
+      : feature.geometry.coordinates;
+
+  let best = null;
+  for (const rings of polygons) {
+    const ring = rings[0];
+    let twiceArea = 0;
+    let x = 0;
+    let y = 0;
+    for (let i = 0; i < ring.length; i += 1) {
+      const [x1, y1] = ring[i];
+      const [x2, y2] = ring[(i + 1) % ring.length];
+      const cross = x1 * y2 - x2 * y1;
+      twiceArea += cross;
+      x += (x1 + x2) * cross;
+      y += (y1 + y2) * cross;
+    }
+    const area = Math.abs(twiceArea / 2);
+    if (area === 0) continue;
+    if (!best || area > best.area) {
+      best = { area, lon: x / (3 * twiceArea), lat: y / (3 * twiceArea) };
+    }
+  }
+  return best;
+}
+
 /** A country's extent, for working out which countries touch which. */
 function bounds(feature) {
   let west = Infinity;
@@ -238,7 +274,14 @@ const region = extract('countries-50m.json', REGION, 200, 0.004);
 const named = new Map();
 for (const f of [...world, ...region]) if (!named.has(f.properties.name)) named.set(f.properties.name, f);
 const colours = colourCountries([...named.values()], PALETTE_SIZE);
-for (const f of [...world, ...region]) f.properties.color = colours.get(f.properties.name) ?? 0;
+for (const f of [...world, ...region]) {
+  f.properties.color = colours.get(f.properties.name) ?? 0;
+  const anchor = labelAnchor(f);
+  if (anchor) {
+    f.properties.at = [Math.round(anchor.lon * 100) / 100, Math.round(anchor.lat * 100) / 100];
+    f.properties.area = Math.round(anchor.area * 100) / 100;
+  }
+}
 
 const collection = { region: REGION, world: WORLD, palette: PALETTE_SIZE, features: region, coarse: world };
 fs.writeFileSync(OUT, JSON.stringify(collection));
