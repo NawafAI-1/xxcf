@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import type { Timeline } from '@/lib/timeline';
+import Panel from './Panel';
+import YearStrip from './YearStrip';
 import { DOMAIN_COLORS } from '@/lib/types';
 
 const DOMAIN_LABELS: Record<string, string> = {
@@ -42,52 +44,14 @@ export default function TimelineRibbon({ timeline }: { timeline: Timeline }) {
         </p>
       ) : null}
 
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-base font-semibold text-slate-900">Datasets in play, year by year</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Bar height is how many datasets cover each year. A bar is teal where all five domains are
-          represented and slate where they are not, so the thin, pale years on the left are the ones
-          an integrated question cannot reach. Click any year to open the records covering it.
-        </p>
-        <div className="mt-4 flex h-24 items-end gap-px">
-          {years.map((entry) => {
-            const complete = entry.domains === 5;
-            return (
-              <Link
-                key={entry.year}
-                href={`/browse?year=${entry.year}`}
-                title={`${entry.year}: ${entry.datasets} dataset${
-                  entry.datasets === 1 ? '' : 's'
-                }, ${entry.domains} of 5 domains. Opens them.`}
-                aria-label={`${entry.year}: open the ${entry.datasets} datasets covering this year`}
-                className="flex flex-1 items-end self-stretch"
-              >
-                <span
-                  className={`w-full rounded-t-[2px] transition ${
-                    complete ? 'bg-teal-700 hover:bg-teal-500' : 'bg-slate-400 hover:bg-slate-500'
-                  }`}
-                  style={{ height: `${Math.max((entry.datasets / peakDatasets) * 100, 3)}%` }}
-                />
-              </Link>
-            );
-          })}
-        </div>
-        <div className="relative mt-1 h-4 border-t border-slate-200">
-          {ticks.map((year) => (
-            <span
-              key={year}
-              className="absolute -translate-x-1/2 text-xs tabular-nums text-slate-500"
-              style={{ left: `${((year - minYear) / span) * 100}%` }}
-            >
-              {year}
-            </span>
-          ))}
-        </div>
-        <p className="mt-6 text-xs text-slate-500">
-          Peak: {peakYear.datasets} datasets covering {peakYear.year}. Earliest year with all five
-          domains: {firstComplete ?? 'none'}.
-        </p>
-      </section>
+      <Panel
+        eyebrow="Coverage"
+        title="Datasets in play, year by year"
+        description="Bar height is how many datasets cover each year, teal where all five domains are represented and slate where they are not. Click any year to open the records covering it."
+        footnote={`Peak: ${peakYear.datasets} datasets covering ${peakYear.year}. Earliest year with all five domains: ${firstComplete ?? 'none'}.`}
+      >
+        <YearStrip years={years} />
+      </Panel>
 
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
