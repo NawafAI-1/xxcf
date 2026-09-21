@@ -7,7 +7,7 @@ import type { Domain, Source } from '@/lib/types';
 import { DOMAIN_COLORS } from '@/lib/types';
 import { type BBox, isGlobalScale } from '@/lib/spatial';
 import { SITES, siteMentions } from '@/lib/sites';
-import { thinStretch } from '@/lib/basin';
+import { coverageColor } from '@/lib/coverage-depth';
 
 /**
  * A map of the basin, drawn as inline SVG from Natural Earth coastline shipped
@@ -29,8 +29,6 @@ interface BasinMapProps {
   focus?: Source;
   /** Tighter crop for the small map on a dataset page. */
   compact?: boolean;
-  /** Draw the latitude coverage gauge and mark the least observed stretch. */
-  showCoverage?: boolean;
   /**
    * Let a click open the location inside the card instead of navigating. The
    * overview's small map has no room for the panel.
@@ -80,6 +78,64 @@ const DOMAIN_LABELS: Record<Domain, string> = {
   'nutrition-health': 'Nutrition & health',
   'socio-economic': 'Socio-economic',
 };
+
+interface Cell {
+  west: number;
+  east: number;
+  south: number;
+  north: number;
+  count: number;
+}
+
+/**
+ * The footprints turned into a single shaded surface.
+ *
+ * Drawing the boxes themselves left thirty-odd rectangles on the sea, and
+ * their edges read as borders around places that have none. Because every
+ * footprint is axis-aligned, the distinct levels of coverage fall on a grid of
+ * the footprints' own edges: cutting there gives exact regions with no grid
+ * artefacts, and merging equal neighbours leaves a surface rather than a stack
+ * of boxes.
+ */
+function coverageCells(prints: Footprint[], view: View): Cell[] {
+  if (prints.length === 0) return [];
+
+  const lons = [...new Set([view.west, view.east, ...prints.flatMap((f) => [f.west, f.east])])]
+    .filter((v) => v >= view.west && v <= view.east)
+    .sort((a, b) => a - b);
+  const lats = [...new Set([view.south, view.north, ...prints.flatMap((f) => [f.south, f.north])])]
+    .filter((v) => v >= view.south && v <= view.north)
+    .sort((a, b) => a - b);
+
+  const cells: Cell[] = [];
+  for (let j = 0; j < lats.length - 1; j += 1) {
+    const south = lats[j];
+    const north = lats[j + 1];
+    if (north - south < 0.001) continue;
+    const midLat = (south + north) / 2;
+
+    let run: Cell | null = null;
+    for (let i = 0; i < lons.length - 1; i += 1) {
+      const west = lons[i];
+      const east = lons[i + 1];
+      if (east - west < 0.001) continue;
+      const midLon = (west + east) / 2;
+      const count = prints.filter(
+        (f) => f.west <= midLon && f.east >= midLon && f.south <= midLat && f.north >= midLat
+      ).length;
+
+      // Neighbours at the same depth are one region, not two boxes.
+      if (run && run.count === count && Math.abs(run.east - west) < 0.001) {
+        run.east = east;
+        continue;
+      }
+      if (run && run.count > 0) cells.push(run);
+      run = { west, east, south, north, count };
+    }
+    if (run && run.count > 0) cells.push(run);
+  }
+  return cells;
+}
 
 interface Point {
   lon: number;
@@ -137,8 +193,8 @@ function frameFor(sources: Source[]): View {
 
   if (!Number.isFinite(west)) return DATA_LIMITS;
   return {
-    west: clamp(west - FRAME_MARGIN * 1.6, DATA_LIMITS.west, DATA_LIMITS.east),
-    east: clamp(east + FRAME_MARGIN * 1.6, DATA_LIMITS.west, DATA_LIMITS.east),
+    west: clamp(west - FRAME_MARGIN, DATA_LIMITS.west, DATA_LIMITS.east),
+    east: clamp(east + FRAME_MARGIN, DATA_LIMITS.west, DATA_LIMITS.east),
     south: clamp(south - FRAME_MARGIN, DATA_LIMITS.south, DATA_LIMITS.north),
     north: clamp(north + FRAME_MARGIN, DATA_LIMITS.south, DATA_LIMITS.north),
   };
@@ -217,7 +273,7 @@ const LABELS: { name: string; lon: number; lat: number; onBright?: boolean }[] =
   // The Red Sea's name sits on the coverage stack, the darkest thing on an
   // otherwise pale map, so it is written light rather than dark.
   { name: 'Red Sea', lon: 38.6, lat: 19.4, onBright: true },
-  { name: 'Gulf of Aden', lon: 46.5, lat: 12.2 },
+  { name: 'Gulf of Aden', lon: 44.8, lat: 12.2 },
   { name: 'The Gulf', lon: 50.4, lat: 27.5 },
   { name: 'Mediterranean', lon: 28.5, lat: 32.4 },
 ];
@@ -269,7 +325,6 @@ export default function BasinMap({
   sources,
   focus,
   compact = false,
-  showCoverage = false,
   interactive = false,
 }: BasinMapProps) {
   // The box the reader has drawn on the map, and the one they are drawing now.
@@ -294,7 +349,19 @@ export default function BasinMap({
   );
   const accent = focus ? DOMAIN_COLORS[focus.domain[0]] : '#2dd4bf';
 
-  const thin = showCoverage && !focus ? thinStretch(sources) : null;
+  const cells = useMemo(() => coverageCells(prints, view), [prints, view]);
+  const coveragePeak = Math.max(...cells.map((c) => c.count), 1);
+
+  /** Whether a patch of water falls inside the box the reader has drawn. */
+  function cellAsked(cell: Cell): boolean {
+    if (!asked) return true;
+    return (
+      cell.west <= asked.east &&
+      cell.east >= asked.west &&
+      cell.south <= asked.north &&
+      cell.north >= asked.south
+    );
+  }
 
   // What is being shown: the finished box, or the one under the pointer.
   const live = drag ? boxOf(drag.from, drag.to) : null;
@@ -400,24 +467,6 @@ export default function BasinMap({
         </g>
       )}
 
-      <g fontSize={u * 2} fontStyle="italic" paintOrder="stroke" strokeWidth={u * 0.5}>
-        {LABELS.filter(
-          (l) => l.lon > view.west && l.lon < view.east && l.lat > view.south && l.lat < view.north
-        ).map((label) => (
-          <text
-            key={label.name}
-            x={x(label.lon)}
-            y={y(label.lat)}
-            textAnchor="middle"
-            fill={label.onBright ? '#f8fafc' : '#64748b'}
-            stroke={label.onBright ? '#1e293b' : '#ffffff'}
-            strokeOpacity={0.85}
-          >
-            {label.name}
-          </text>
-        ))}
-      </g>
-
       {/* One record's footprint, clipped to the sea. A bounding box drawn whole
           covers two countries and claims a reach over land that no marine
           dataset has; masking the land out shows the water it is about. */}
@@ -447,94 +496,41 @@ export default function BasinMap({
         </g>
       ) : null}
 
-      {/* The least observed stretch, marked where it is rather than only named
-          in a panel beside the map. */}
-      {thin ? (
-        <g>
+      {/* What the records actually cover, as one surface. Thirty of the
+          thirty-two give a bounding box over the whole sea, so the depth of
+          colour is the finding: how many reach this water. */}
+      <g mask="url(#seaOnly)" shapeRendering="crispEdges">
+        {cells.map((cell) => (
           <rect
-            x={0}
-            y={y(thin.to)}
-            width={width}
-            height={Math.max(y(thin.from) - y(thin.to), u)}
-            fill="#b45309"
-            fillOpacity={0.13}
-            mask="url(#seaOnly)"
-          />
-          {[thin.to, thin.from].map((lat) => (
-            <line
-              key={lat}
-              x1={0}
-              y1={y(lat)}
-              x2={width}
-              y2={y(lat)}
-              stroke="#b45309"
-              strokeOpacity={0.45}
-              strokeWidth={u * 0.13}
-              strokeDasharray={`${u * 0.8} ${u * 0.6}`}
-            />
-          ))}
-          <text
-            x={u * 3}
-            y={y((thin.from + thin.to) / 2) + u * 0.6}
-            textAnchor="start"
-            fontSize={u * 1.6}
-            fontWeight="600"
-            fill="#92400e"
-            stroke="#ffffff"
-            strokeWidth={u * 0.5}
-            paintOrder="stroke"
+            key={`${cell.west}-${cell.south}-${cell.east}`}
+            x={x(cell.west) - 0.5}
+            y={y(cell.north) - 0.5}
+            width={Math.max(x(cell.east) - x(cell.west) + 1, 1)}
+            height={Math.max(y(cell.south) - y(cell.north) + 1, 1)}
+            fill={coverageColor(cell.count, coveragePeak)}
+            fillOpacity={asked === null || cellAsked(cell) ? 1 : 0.35}
           >
-            {`thinnest: ${thin.count} datasets reach ${thin.from.toFixed(1)}-${thin.to.toFixed(1)}°N`}
-          </text>
-        </g>
-      ) : null}
-
-      {/* What each record actually covers. Thirty of the thirty-three give a
-          bounding box over the whole sea, so the overlap is the finding: the
-          water brightens where many reach and stays dark where few do. */}
-      <g mask="url(#seaOnly)">
-        {prints.map((print) => {
-          const lit =
-            asked !== null &&
-            print.west <= asked.east &&
-            print.east >= asked.west &&
-            print.south <= asked.north &&
-            print.north >= asked.south;
-          return (
-            <rect
-              key={print.source.id}
-              x={x(print.west)}
-              y={y(print.north)}
-              width={Math.max(x(print.east) - x(print.west), u * 0.3)}
-              height={Math.max(y(print.south) - y(print.north), u * 0.3)}
-              fill="#334e68"
-              fillOpacity={asked === null ? 0.055 : lit ? 0.08 : 0.012}
-            />
-          );
-        })}
+            <title>{`${cell.count} dataset${cell.count === 1 ? '' : 's'} reach here`}</title>
+          </rect>
+        ))}
       </g>
 
-      {/* The two records that describe a stretch rather than the whole sea are
-          the only ones whose outline says anything, so they get one. */}
-      <g>
-        {prints
-          .filter((print) => print.local)
-          .map((print) => (
-            <rect
-              key={`local-${print.source.id}`}
-              x={x(print.west)}
-              y={y(print.north)}
-              width={Math.max(x(print.east) - x(print.west), u * 0.6)}
-              height={Math.max(y(print.south) - y(print.north), u * 0.6)}
-              fill="none"
-              stroke={DOMAIN_COLORS[print.source.domain[0]]}
-              strokeWidth={u * 0.22}
-              strokeOpacity={0.85}
-              rx={u * 0.3}
-            >
-              <title>{print.source.title}</title>
-            </rect>
-          ))}
+      <g fontSize={u * 2} fontStyle="italic" paintOrder="stroke" strokeWidth={u * 0.5}>
+        {LABELS.filter(
+          (l) => l.lon > view.west && l.lon < view.east && l.lat > view.south && l.lat < view.north
+        ).map((label) => (
+          <text
+            key={label.name}
+            x={x(label.lon)}
+            y={y(label.lat)}
+            textAnchor="middle"
+            fill={label.onBright ? '#f8fafc' : '#64748b'}
+            stroke={label.onBright ? '#1e293b' : '#ffffff'}
+            strokeOpacity={0.85}
+          >
+            {label.name}
+          </text>
+        ))}
       </g>
 
       {/* The places the records name as where the work happened. */}
@@ -671,12 +667,26 @@ export default function BasinMap({
 
   if (!interactive) return <figure className="m-0">{mapSvg}</figure>;
 
+  if (!asked) {
+    return (
+      <div>
+        <figure className="m-0 overflow-hidden rounded-xl ring-1 ring-slate-900/10">{mapSvg}</figure>
+        <p className="mt-3 text-sm text-slate-500">
+          Drag a box on the map to see what data covers it. Only{' '}
+          {prints.filter((f) => f.local).length} of {prints.length} records describe a stretch
+          smaller than the basin, so the depth of colour is how many reach that water rather than
+          where anyone went.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
       <figure className="m-0 overflow-hidden rounded-xl ring-1 ring-slate-900/10">{mapSvg}</figure>
 
-      <div className="flex flex-col">
-        {asked && inside.length > 0 ? (
+      <div className="flex flex-col self-start">
+        {inside.length > 0 ? (
           <div className="flex min-h-0 flex-1 flex-col">
             <div className="flex items-baseline justify-between gap-3">
               <p className="text-sm font-semibold text-slate-900">
@@ -762,8 +772,8 @@ export default function BasinMap({
               Filter browse to these &rarr;
             </Link>
           </div>
-        ) : asked ? (
-          <div className="flex flex-1 flex-col justify-center rounded-xl border border-dashed border-slate-300 p-5 text-sm text-slate-500">
+        ) : (
+          <div className="flex flex-col rounded-xl border border-dashed border-slate-300 p-5 text-sm text-slate-500">
             <p>No record reaches this box.</p>
             <button
               type="button"
@@ -772,16 +782,6 @@ export default function BasinMap({
             >
               Clear
             </button>
-          </div>
-        ) : (
-          <div className="flex flex-1 flex-col justify-center rounded-xl border border-dashed border-slate-300 p-5 text-sm text-slate-500">
-            <p>Drag a box on the map to see what data covers it.</p>
-            <p className="mt-3 text-xs leading-relaxed">
-              Each shaded rectangle is one record&rsquo;s stated extent. Only{' '}
-              {prints.filter((f) => f.local).length} of {prints.length} describe a stretch smaller
-              than the basin, so the dark water is where many records overlap rather than where
-              anyone went.
-            </p>
           </div>
         )}
       </div>

@@ -5,6 +5,7 @@ import { siteMentions } from "@/lib/sites";
 import { type BBox, isGlobalScale } from "@/lib/spatial";
 import { DOMAIN_COLORS } from "@/lib/types";
 import BasinMap from "@/components/BasinMap";
+import { coverageColor } from "@/lib/coverage-depth";
 import PageHeader from "@/components/PageHeader";
 import Panel from "@/components/Panel";
 import { sectionAccent } from "@/lib/sections";
@@ -73,32 +74,31 @@ export default function WherePage() {
 
       <Panel
         title={`${mappable.length} datasets over the basin`}
-        footnote="Each rectangle is one record's stated extent, clipped to the water, so the darker the sea the more records reach it. Natural Earth coastline, nothing fetched at runtime."
+        footnote="The water is shaded by how many records state an extent covering it. Natural Earth coastline, nothing fetched at runtime."
       >
         <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-600">
           <span className="flex items-center gap-2">
             Few records here
-            <span className="flex overflow-hidden rounded-[3px]" aria-hidden>
-              {[0.12, 0.3, 0.48, 0.66, 0.84, 1].map((step) => (
+            <span className="flex overflow-hidden rounded-[3px] ring-1 ring-slate-200" aria-hidden>
+              {[1, 2, 4, 8, 14, 20, 26, 32].map((step) => (
                 <span
                   key={step}
                   className="h-3 w-5"
-                  style={{ backgroundColor: `rgba(51, 78, 104, ${step})` }}
+                  style={{ backgroundColor: coverageColor(step, 32) }}
                 />
               ))}
             </span>
             many
           </span>
           <span className="text-slate-400">
-            Outlined rectangles are the two records with a footprint smaller than
-            the sea
+Only two records describe a stretch smaller than the whole sea
           </span>
         </div>
 
-        <BasinMap sources={sources} showCoverage interactive />
+        <BasinMap sources={sources} interactive />
       </Panel>
 
-      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+      <div className="columns-1 gap-4 md:columns-2 lg:columns-3 [&>*]:mb-4 [&>*]:break-inside-avoid">
         <Panel
           eyebrow="The north-south gradient"
           title={`${max} datasets at the widest, ${min} at the thinnest`}
@@ -132,11 +132,7 @@ export default function WherePage() {
             ) : null}
           </Panel>
         )}
-      </div>
 
-      {/* Reference lists sit under the map rather than in a column beside it,
-          which used to run twice the map's height. */}
-      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
         {sites.length > 0 && (
           <Panel
             eyebrow="On the map"
