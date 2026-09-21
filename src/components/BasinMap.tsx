@@ -275,7 +275,7 @@ const LABELS: { name: string; lon: number; lat: number; onBright?: boolean }[] =
   { name: 'Red Sea', lon: 38.6, lat: 19.4, onBright: true },
   { name: 'Gulf of Aden', lon: 44.8, lat: 12.2 },
   { name: 'The Gulf', lon: 50.4, lat: 27.5 },
-  { name: 'Mediterranean', lon: 28.5, lat: 32.4 },
+  { name: 'Mediterranean', lon: 30.8, lat: 32.4 },
 ];
 
 /**
@@ -375,7 +375,8 @@ export default function BasinMap({
           f.north >= asked.south
       )
     : [];
-  const insideMix = domainMix(inside.map((f) => f.source));
+  const shown = asked ? inside : prints;
+  const shownMix = domainMix(shown.map((f) => f.source));
   const insideSites = asked
     ? sites.filter(
         ({ site }) =>
@@ -667,49 +668,48 @@ export default function BasinMap({
 
   if (!interactive) return <figure className="m-0">{mapSvg}</figure>;
 
-  if (!asked) {
-    return (
+  return (
+    <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
       <div>
-        <figure className="m-0 overflow-hidden rounded-xl ring-1 ring-slate-900/10">
-          {mapSvg}
-        </figure>
-        <p className="mt-3 text-sm text-slate-500">
-          Drag a box to see what covers it. Only {prints.filter((f) => f.local).length} of{' '}
+        <figure className="m-0 overflow-hidden rounded-xl ring-1 ring-slate-900/10">{mapSvg}</figure>
+        <p className="mt-3 text-xs leading-snug text-slate-500">
+          Drag a box to narrow the list. Only {prints.filter((f) => f.local).length} of{' '}
           {prints.length} records describe a stretch smaller than the basin, so depth of colour is
           how many reach that water, not where anyone went.
         </p>
       </div>
-    );
-  }
 
-  return (
-    <div>
-      <figure className="m-0 overflow-hidden rounded-xl ring-1 ring-slate-900/10">{mapSvg}</figure>
-
-      <div className="mt-4 flex flex-col">
-        {inside.length > 0 ? (
+      <div className="flex flex-col">
+        {shown.length > 0 ? (
           <div className="flex min-h-0 flex-1 flex-col">
             <div className="flex items-baseline justify-between gap-3">
               <p className="text-sm font-semibold text-slate-900">
-                {inside.length} dataset{inside.length === 1 ? '' : 's'} here
+                {shown.length} dataset{shown.length === 1 ? '' : 's'}
+                {asked ? ' here' : ' over the basin'}
               </p>
-              <button
-                type="button"
-                onClick={() => setSelection(null)}
-                className="text-xs text-slate-400 transition hover:text-slate-700"
-              >
-                Clear
-              </button>
+              {asked ? (
+                <button
+                  type="button"
+                  onClick={() => setSelection(null)}
+                  className="text-xs text-slate-400 transition hover:text-slate-700"
+                >
+                  Clear
+                </button>
+              ) : null}
             </div>
-            <p className="mt-0.5 text-xs tabular-nums text-slate-500">
-              {asked.south.toFixed(1)}&ndash;{asked.north.toFixed(1)}&deg;N,{' '}
-              {asked.west.toFixed(1)}&ndash;{asked.east.toFixed(1)}&deg;E
-            </p>
+            {asked ? (
+              <p className="mt-0.5 text-xs tabular-nums text-slate-500">
+                {asked.south.toFixed(1)}&ndash;{asked.north.toFixed(1)}&deg;N,{' '}
+                {asked.west.toFixed(1)}&ndash;{asked.east.toFixed(1)}&deg;E
+              </p>
+            ) : (
+              <p className="mt-0.5 text-xs text-slate-500">Drag a box on the map to narrow this.</p>
+            )}
 
             {/* What kind of data, before which records: the mix is the answer
                 to "what is here", the list is the detail under it. */}
             <ul className="mt-3 space-y-1.5">
-              {insideMix.map((entry) => (
+              {shownMix.map((entry) => (
                 <li key={entry.domain} className="flex items-center gap-2 text-xs">
                   <span
                     className="h-2.5 w-2.5 shrink-0 rounded-full"
@@ -723,7 +723,7 @@ export default function BasinMap({
                     <span
                       className="block h-full rounded-full"
                       style={{
-                        width: `${(entry.count / insideMix[0].count) * 100}%`,
+                        width: `${(entry.count / shownMix[0].count) * 100}%`,
                         backgroundColor: DOMAIN_COLORS[entry.domain],
                       }}
                     />
@@ -741,8 +741,8 @@ export default function BasinMap({
               </p>
             ) : null}
 
-            <ul className="mt-3 max-h-64 space-y-1.5 overflow-y-auto border-t border-slate-100 pr-1 pt-3">
-              {inside.map(({ source, local }) => (
+            <ul className="mt-3 max-h-[19rem] space-y-1.5 overflow-y-auto border-t border-slate-100 pr-1 pt-3">
+              {shown.map(({ source, local }) => (
                 <li key={source.id}>
                   <Link
                     href={`/sources/${source.id}`}
@@ -767,7 +767,7 @@ export default function BasinMap({
             </ul>
 
             <Link
-              href={`/browse?id=${inside.map((f) => f.source.id).join(',')}`}
+              href={`/browse?id=${shown.map((f) => f.source.id).join(',')}`}
               className="mt-3 inline-block text-xs font-medium text-teal-700 hover:underline"
             >
               Filter browse to these &rarr;

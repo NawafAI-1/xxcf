@@ -71,74 +71,70 @@ export default function WherePage() {
         description="What each dataset covers, and where the basin is least observed."
       />
 
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,36rem)_minmax(0,1fr)]">
-        <Panel
-          title={`${mappable.length} datasets over the basin`}
-          footnote="Natural Earth coastline, nothing fetched at runtime."
-        >
-          <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-600">
-            <span className="flex items-center gap-2">
-              Few
-              <span
-                className="flex overflow-hidden rounded-[3px] ring-1 ring-slate-200"
-                aria-hidden
-              >
-                {[1, 2, 4, 8, 14, 20, 26, 32].map((step) => (
-                  <span
-                    key={step}
-                    className="h-3 w-5"
-                    style={{ backgroundColor: coverageColor(step, 32) }}
-                  />
-                ))}
-              </span>
-              many
+      <Panel
+        title="How far each dataset reaches"
+        footnote="Natural Earth coastline, nothing fetched at runtime."
+      >
+        <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-600">
+          <span className="flex items-center gap-2">
+            Few
+            <span
+              className="flex overflow-hidden rounded-[3px] ring-1 ring-slate-200"
+              aria-hidden
+            >
+              {[1, 2, 4, 8, 14, 20, 26, 32].map((step) => (
+                <span
+                  key={step}
+                  className="h-3 w-5"
+                  style={{ backgroundColor: coverageColor(step, 32) }}
+                />
+              ))}
             </span>
-            <span className="text-slate-400">
-              Only two records describe a stretch smaller than the whole sea
-            </span>
-          </div>
+            many
+          </span>
+          <span className="text-slate-400">
+            Only two records describe a stretch smaller than the whole sea
+          </span>
+        </div>
 
-          <BasinMap sources={sources} interactive />
+        <BasinMap sources={sources} interactive />
+      </Panel>
+
+      <div className="columns-1 gap-4 md:columns-2 lg:columns-3 [&>*]:mb-4 [&>*]:break-inside-avoid">
+        <Panel
+          eyebrow="The north-south gradient"
+          title={`${max} datasets at the widest, ${min} at the thinnest`}
+        >
+          <p className="text-sm leading-relaxed text-slate-600">
+            {max} datasets reach{" "}
+            {widest ? `${widest.lat.toFixed(1)}°N` : "the centre"}, {min} reach{" "}
+            {thinnest ? `${thinnest.lat.toFixed(1)}°N` : "the strait"}. The
+            south is half as observed as the centre.
+          </p>
         </Panel>
 
-        <div className="space-y-4">
+        {thin && (
           <Panel
-            eyebrow="The north-south gradient"
-            title={`${max} datasets at the widest, ${min} at the thinnest`}
+            eyebrow="Where to look next"
+            title={`${thin.from.toFixed(1)}°N to ${thin.to.toFixed(1)}°N`}
+            description={`Least observed: ${thin.count} datasets reach it. These sit closest.`}
+            footnote="A prioritisation aid, not a prediction."
           >
-            <p className="text-sm leading-relaxed text-slate-600">
-              {max} datasets reach{" "}
-              {widest ? `${widest.lat.toFixed(1)}°N` : "the centre"}, {min}{" "}
-              reach {thinnest ? `${thinnest.lat.toFixed(1)}°N` : "the strait"}.
-              The south is half as observed as the centre.
-            </p>
+            {thin.nearby.length > 0 ? (
+              <>
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                  Stops just short of it
+                </p>
+                <ul className="space-y-1.5">
+                  {thin.nearby.slice(0, 5).map((s) => (
+                    <SourceLine key={s.id} source={s} />
+                  ))}
+                </ul>
+              </>
+            ) : null}
           </Panel>
+        )}
 
-          {thin && (
-            <Panel
-              eyebrow="Where to look next"
-              title={`${thin.from.toFixed(1)}°N to ${thin.to.toFixed(1)}°N`}
-              description={`Least observed: ${thin.count} datasets reach it. These sit closest.`}
-              footnote="A prioritisation aid, not a prediction."
-            >
-              {thin.nearby.length > 0 ? (
-                <>
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-                    Stops just short of it
-                  </p>
-                  <ul className="space-y-1.5">
-                    {thin.nearby.slice(0, 5).map((s) => (
-                      <SourceLine key={s.id} source={s} />
-                    ))}
-                  </ul>
-                </>
-              ) : null}
-            </Panel>
-          )}
-        </div>
-      </div>
-
-      <div className="grid items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
         {sites.length > 0 && (
           <Panel
             eyebrow="On the map"
@@ -182,7 +178,7 @@ export default function WherePage() {
             title={`${global.length} global datasets`}
             description="They cover everywhere, so no point on the map is theirs."
           >
-            <ul className="columns-1 gap-4 sm:columns-2 lg:columns-1 [&>li]:mb-1.5 [&>li]:break-inside-avoid">
+            <ul className="space-y-1.5">
               {global.map((s) => (
                 <SourceLine key={s.id} source={s} />
               ))}
